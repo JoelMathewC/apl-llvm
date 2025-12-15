@@ -14,9 +14,6 @@
 
 %%
 
-[_a-zA-Z⍙∆]+ {return VARIABLE;}
-[0-9]+ {return LITERAL;}
-
 "←"     {return LEFT_ARROW;}
 
 "+"		{return PLUS;}
@@ -104,6 +101,9 @@
 
 "¯" {return HIGH_MINUS;}
 "⍬" {return ZILDE;}
+
+[_a-zA-Z⍙∆]+ {return VARIABLE;}
+[0-9]+ {return LITERAL;}
 %%
 
 int main() {
