@@ -7,7 +7,7 @@
 %option noyywrap
 
 %{
-    #include "parser.tab.h"
+    #include "parser.tab.hpp"
     int yyerror(char *sp);
     int yyparse();
 %}
@@ -103,7 +103,7 @@
 "⍬" {return ZILDE;}
 
 [_a-zA-Z⍙∆]+ {return VARIABLE;}
-[0-9]+ {return LITERAL;}
+[0-9]+(\.[0-9]+)? {return LITERAL;}
 %%
 
 int main() {

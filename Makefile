@@ -1,8 +1,8 @@
 parser: lex_code parser_code
-	gcc -o build/parser build/lexer.yy.c build/parser.tab.c
-lex_code: parser_code lexer.l
-	flex -o build/lexer.yy.c lexer.l
-parser_code: parser.y
-	bison -o build/parser.tab.c --defines=build/parser.tab.h parser.y
+	g++ -o build/parser build/lexer.yy.cpp build/parser.tab.cpp
+lex_code: parser_code src/lexer.l
+	flex -o build/lexer.yy.cpp src/lexer.l
+parser_code: src/parser.y
+	bison -o build/parser.tab.cpp --defines=build/parser.tab.hpp src/parser.y
 clean:
 	rm build/*
