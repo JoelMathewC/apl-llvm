@@ -1,8 +1,8 @@
 build: lexer parser
-	g++ -o build/apl-compiler build/lexer.yy.cpp build/parser.tab.cpp
+	g++ -std=c++17 -o src/compiler src/lexer.yy.cpp src/parser.tab.cpp
 lexer: parser src/lexer.l
-	flex -o build/lexer.yy.cpp src/lexer.l
+	flex -o src/lexer.yy.cpp src/lexer.l
 parser: src/parser.y
-	bison -o build/parser.tab.cpp --defines=build/parser.tab.hpp src/parser.y
+	bison -o src/parser.tab.cpp --defines=src/parser.tab.hpp src/parser.y
 clean:
-	rm build/*
+	rm -f src/parser.tab.cpp src/parser.tab.hpp src/lexer.yy.cpp src/compiler

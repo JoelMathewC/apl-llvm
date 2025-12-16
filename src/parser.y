@@ -1,17 +1,31 @@
-%{
+%code requires {
     #include <cstdio>
     #include <cstdlib>
+    #include <vector>
+
+    #include "ast/ast.hpp"
 
     int yylex();
     int yyerror(const char *sp);
-%}
+}
 
-%token VARIABLE LITERAL LEFT_ARROW PLUS MINUS TIMES STAR DIVIDE 
+%union {
+    AplAst::Literal* literal;
+    const char* string;
+    char single_char;
+    double number;
+}
+
+%token <number> LITERAL
+%token <string> VARIABLE
+%token <single_char> LEFT_ARROW DIAMOND PLUS MINUS TIMES STAR DIVIDE
+%type <literal> array
+
+%right PLUS MINUS TIMES STAR DIVIDE
 
 %%
 
-prgm: prgm '⋄' prgm     {}
-    | '(' prgm ')'      {}  
+prgm: prgm DIAMOND prgm     {}
     | op_stmt           {} 
     | assign_stmt       {}
 
@@ -36,7 +50,7 @@ dyadic_op : PLUS    {}
     | STAR          {}
     | DIVIDE        {}
 
-array: array LITERAL            {}
-    | LITERAL                   {}
+array: array LITERAL            {$$ = AplAst::Literal::create($1->getVal(),$2);}
+    | LITERAL                   {$$ = AplAst::Literal::create($1);}
 
 %%

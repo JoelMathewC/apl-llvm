@@ -21,6 +21,7 @@
 "x"		{return TIMES;}
 "*"		{return STAR;}
 "÷"		{return DIVIDE;}
+"⋄"     {return DIAMOND;}
 
 [_a-zA-Z⍙∆]+ {return VARIABLE;}
 [0-9]+(\.[0-9]+)? {return LITERAL;}

@@ -1,2 +1,5 @@
-build/
+src/lexer.yy.cpp
+src/parser.tab.cpp
+src/parser.tab.hpp
+src/compiler
 .vscode/

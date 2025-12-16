@@ -24,11 +24,19 @@ public:
 };
 
 class Literal : Node {
-  std::vector<double> val;
+  const std::vector<double> val;
 
 public:
   Literal(const std::vector<double> val) : val(val) {}
   const std::vector<double> &getVal() const { return val; }
+  static Literal *create(double val) {
+    std::vector<double> vec = {val};
+    return new AplAst::Literal(vec);
+  }
+  static Literal *create(std::vector<double> old_vec, double new_elem) {
+    old_vec.push_back(new_elem);
+    return new AplAst::Literal(old_vec);
+  }
 };
 
 class MonadicExpr : Node {
