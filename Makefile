@@ -1,3 +1,5 @@
+run: src/compiler
+	./src/compiler
 build: lexer parser
 	g++ -std=c++17 -o src/compiler src/lexer.yy.cpp src/parser.tab.cpp
 lexer: parser src/lexer.l

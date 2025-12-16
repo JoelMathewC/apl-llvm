@@ -4,18 +4,19 @@
     we expect it to terminate at the end of a file.
     Ref: https://stackoverflow.com/questions/1811125/undefined-reference-to-yywrap
 */
+
 %option noyywrap
 
 %{
     #include "parser.tab.hpp"
     int yyerror(const char *sp);
-    int yyparse();
 %}
 
 %%
 
+[ \t]+
+(⍝.*)
 "←"     {return LEFT_ARROW;}
-
 "+"		{return PLUS;}
 "-"		{return MINUS;}
 "x"		{return TIMES;}
@@ -27,10 +28,6 @@
 [0-9]+(\.[0-9]+)? {return LITERAL;}
 
 %%
-
-int main() {
-    yyparse();
-}
 
 int yyerror(const char *sp) {
     printf("%s", sp);

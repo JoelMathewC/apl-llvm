@@ -6,5 +6,5 @@ This is a compiler for the APL programming language built using LLVM.
 ```
 mkdir build/
 make build
-./apl-compiler
+make run
 ```

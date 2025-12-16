@@ -26,8 +26,8 @@
 %%
 
 prgm: prgm DIAMOND prgm     {}
-    | op_expr           {} 
-    | assign_stmt       {}
+    | op_expr               {} 
+    | assign_stmt           {}
 
 assign_stmt: VARIABLE LEFT_ARROW op_expr {}
 
@@ -49,3 +49,10 @@ array: array LITERAL            {$$ = AplAst::Literal::create($1->getVal(),$2);}
     | LITERAL                   {$$ = AplAst::Literal::create($1);}
 
 %%
+
+int main() {
+    printf("Welcome to the APL compiler!\n");
+    printf("apl-compiler> ");
+    yyparse();
+    return 0;
+}
