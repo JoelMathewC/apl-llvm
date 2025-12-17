@@ -2,17 +2,26 @@
 
 This is an interpreter for the APL programming language built using LLVM.
 
-## Running
-```
-mkdir build/
-make build
-make run
+## Setup
+### Generating lexer and parser
+```bash
+bison -o src/parser.tab.cpp --defines=src/parser.tab.hpp src/parser.y
+flex -o src/lexer.yy.cpp src/lexer.l
 ```
 
-## Debugging
+### CMake Build
+```bash
+cmake -B build/
+cmake --build build/ --config Release
 ```
-mkdir build/
-make gen
-# Add breakpoints in the relevant code segments (including generated )
-make debug
+
+### Debugging
+```bash
+cmake -B build/
+cmake --build build/ --config Debug
+```
+
+### Running
+```bash
+./build/apl-interpreter
 ```
