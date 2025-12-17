@@ -20,7 +20,7 @@
 %token <string> VARIABLE
 %token <single_char> LEFT_ARROW DIAMOND PLUS MINUS TIMES STAR DIVIDE INPUT_COMPLETED EXIT
 
-%type <literal> prgm op_expr
+%type <node> prgm op_expr
 %type <literal> array
 
 %right DIAMOND PLUS MINUS TIMES STAR DIVIDE

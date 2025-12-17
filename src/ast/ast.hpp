@@ -12,9 +12,22 @@
 #include <vector>
 
 namespace AplAst {
-class Node {};
+class Node {
+public:
+  const std::string print() const;
+};
 
-class Variable : Node {
+class Literal : public Node {
+  const std::vector<double> val;
+
+public:
+  Literal(const std::vector<double> val) : val(val) {}
+  const std::vector<double> &getVal() const;
+  static Literal *create(double val);
+  static Literal *create(std::vector<double> old_vec, double new_elem);
+};
+
+class Variable : public Node {
   std::string name;
 
 public:
@@ -22,23 +35,7 @@ public:
   const std::string &getName() const { return name; }
 };
 
-class Literal : Node {
-  const std::vector<double> val;
-
-public:
-  Literal(const std::vector<double> val) : val(val) {}
-  const std::vector<double> &getVal() const { return val; }
-  static Literal *create(double val) {
-    std::vector<double> vec = {val};
-    return new AplAst::Literal(vec);
-  }
-  static Literal *create(std::vector<double> old_vec, double new_elem) {
-    old_vec.push_back(new_elem);
-    return new AplAst::Literal(old_vec);
-  }
-};
-
-class MonadicExpr : Node {
+class MonadicExpr : public Node {
   char opcode;
   std::unique_ptr<Node> operand;
 
@@ -47,7 +44,7 @@ public:
       : opcode(opcode), operand(std::move(operand)) {}
 };
 
-class DyadicExpr : Node {
+class DyadicExpr : public Node {
   char opcode;
   std::unique_ptr<Node> lhsOperand, rhsOperand;
 
@@ -58,7 +55,7 @@ public:
         rhsOperand(std::move(rhsOperand)) {}
 };
 
-class CallExpr : Node {
+class CallExpr : public Node {
   std::string callee;
   std::vector<std::unique_ptr<Node>> args;
 
@@ -67,13 +64,13 @@ public:
       : callee(callee), args(std::move(args)) {}
 };
 
-class AssignStmt : Node {
+class AssignStmt : public Node {
   std::unique_ptr<Node> lhs, rhs;
 
 public:
   AssignStmt(std::unique_ptr<Node> lhs, std::unique_ptr<Node> rhs)
       : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 };
-} // namespace AplAst
 
-std::ostream &operator<<(std::ostream &os, const AplAst::Literal &literal);
+std::ostream &operator<<(std::ostream &os, const AplAst::Node &node);
+} // namespace AplAst
