@@ -1,6 +1,6 @@
 src/lexer.yy.cpp
 src/parser.tab.cpp
 src/parser.tab.hpp
-src/compiler
+src/interpreter
 .vscode/
 *.dSYM/
