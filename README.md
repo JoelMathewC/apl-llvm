@@ -15,7 +15,12 @@ cmake -B build/
 cmake --build build/ --config Debug
 ```
 
-### Running
+### Running Binary
 ```bash
 ./build/apl-interpreter
+```
+
+### Running Tests
+```bash
+./build/<test-name>
 ```
