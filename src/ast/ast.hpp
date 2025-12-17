@@ -13,8 +13,6 @@
 namespace AplAst {
 class Node {};
 
-class Tree {};
-
 class Variable : Node {
   std::string name;
 
@@ -68,7 +66,7 @@ public:
       : callee(callee), args(std::move(args)) {}
 };
 
-class AssignStmt : Tree {
+class AssignStmt : Node {
   std::unique_ptr<Node> lhs, rhs;
 
 public:

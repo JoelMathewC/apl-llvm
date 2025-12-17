@@ -14,8 +14,12 @@
 
 %%
 
+"\n"    {return INPUT_COMPLETED;}
+"quit()"    {return EXIT;}
+
 [ \t]+
 (⍝.*)
+
 "←"     {return LEFT_ARROW;}
 "+"		{return PLUS;}
 "-"		{return MINUS;}
@@ -30,6 +34,6 @@
 %%
 
 int yyerror(const char *sp) {
-    printf("%s", sp);
+    printf("Error could not parse: %s", sp);
     exit(1);
 }

@@ -18,16 +18,21 @@
 
 %token <number> LITERAL
 %token <string> VARIABLE
-%token <single_char> LEFT_ARROW DIAMOND PLUS MINUS TIMES STAR DIVIDE
+%token <single_char> LEFT_ARROW DIAMOND PLUS MINUS TIMES STAR DIVIDE INPUT_COMPLETED EXIT
 %type <literal> array
 
 %right DIAMOND PLUS MINUS TIMES STAR DIVIDE
 
 %%
+start: prgm                 {}
+    | prgm INPUT_COMPLETED  {YYACCEPT;}
+    | INPUT_COMPLETED       {YYACCEPT;}
+    | EXIT                  {exit(0);}
 
 prgm: prgm DIAMOND prgm     {}
     | op_expr               {} 
     | assign_stmt           {}
+    
 
 assign_stmt: VARIABLE LEFT_ARROW op_expr {}
 
@@ -51,8 +56,13 @@ array: array LITERAL            {$$ = AplAst::Literal::create($1->getVal(),$2);}
 %%
 
 int main() {
-    printf("Welcome to the APL compiler!\n");
-    printf("apl-compiler> ");
-    yyparse();
+    printf("\033[32m=== APL Interpreter 1.0 ===\033[0m\n");
+    printf("Type \"quit()\" to exit this program\n");
+
+    while(true) {
+        printf("\033[35m>>>\033[0m ");
+        yyparse();
+    }
+
     return 0;
 }
