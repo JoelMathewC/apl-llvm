@@ -7,6 +7,7 @@
    https://github.com/DSLs-for-HPC/APL2C
 */
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -74,3 +75,5 @@ public:
       : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 };
 } // namespace AplAst
+
+std::ostream &operator<<(std::ostream &os, const AplAst::Literal &literal);
