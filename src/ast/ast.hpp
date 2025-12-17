@@ -1,22 +1,21 @@
-/*
-    This abstract syntax tree draw inspiration from the Kaleidoscope tutorial
-   from the official LLVM repository and the APL2C assignment from the DSLs for
-   HPC (CS 8803 DSL) course at GeorgiaTech.
-
-   https://github.com/llvm/llvm-project/blob/main/llvm/examples/Kaleidoscope/Chapter9/toy.cpp
-   https://github.com/DSLs-for-HPC/APL2C
-*/
+// This abstract syntax tree draw inspiration from the Kaleidoscope tutorial
+// from the official LLVM repository and the APL2C assignment from the DSLs for
+// HPC (CS 8803 DSL) course at GeorgiaTech.
+// https://github.com/llvm/llvm-project/blob/main/llvm/examples/Kaleidoscope/Chapter9/toy.cpp
+// https://github.com/DSLs-for-HPC/APL2C
 
 #include <iostream>
 #include <string>
 #include <vector>
 
 namespace AplAst {
+// Abstract Class for nodes in the APL AST
 class Node {
 public:
-  const std::string print() const;
+  virtual const std::string print() const;
 };
 
+// Literal node in the APL AST
 class Literal : public Node {
   const std::vector<double> val;
 
@@ -25,8 +24,10 @@ public:
   const std::vector<double> &getVal() const;
   static Literal *create(double val);
   static Literal *create(std::vector<double> old_vec, double new_elem);
+  const std::string print() const override;
 };
 
+// Variable node in the APL AST
 class Variable : public Node {
   std::string name;
 
@@ -35,6 +36,7 @@ public:
   const std::string &getName() const { return name; }
 };
 
+// Monadic Expression in the APL AST
 class MonadicExpr : public Node {
   char opcode;
   std::unique_ptr<Node> operand;
@@ -44,6 +46,7 @@ public:
       : opcode(opcode), operand(std::move(operand)) {}
 };
 
+// Dyadic Expression in the APL AST
 class DyadicExpr : public Node {
   char opcode;
   std::unique_ptr<Node> lhsOperand, rhsOperand;
@@ -55,6 +58,7 @@ public:
         rhsOperand(std::move(rhsOperand)) {}
 };
 
+// Calls in the APL AST
 class CallExpr : public Node {
   std::string callee;
   std::vector<std::unique_ptr<Node>> args;
@@ -64,6 +68,7 @@ public:
       : callee(callee), args(std::move(args)) {}
 };
 
+// Assignment statements in the APL AST
 class AssignStmt : public Node {
   std::unique_ptr<Node> lhs, rhs;
 
@@ -72,5 +77,6 @@ public:
       : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 };
 
-std::ostream &operator<<(std::ostream &os, const AplAst::Node &node);
+// ostream overlead for APL AST Node
+std::ostream &operator<<(std::ostream &os, const Node &node);
 } // namespace AplAst

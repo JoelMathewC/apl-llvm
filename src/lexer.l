@@ -1,10 +1,3 @@
-/*
-    The yywrap() function specifies the behaviour of the lexer
-    when it reaches the end of a file. By disabling yywrap()
-    we expect it to terminate at the end of a file.
-    Ref: https://stackoverflow.com/questions/1811125/undefined-reference-to-yywrap
-*/
-
 %option noyywrap
 
 %{

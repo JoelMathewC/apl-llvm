@@ -3,8 +3,9 @@
 #include <vector>
 
 namespace AplAst {
-const std::string Node::print() const { return "LITERAL"; }
-const std::vector<double> &Literal::getVal() const { return this -> val; }
+const std::vector<double> &Literal::getVal() const { return this->val; }
+
+const std::string Node::print() const { return "NODE"; }
 
 Literal *Literal::create(double val) {
   std::vector<double> vec = {val};
@@ -16,7 +17,9 @@ Literal *Literal::create(std::vector<double> old_vec, double new_elem) {
   return new Literal(old_vec);
 }
 
-std::ostream &operator<<(std::ostream &os, const AplAst::Node &node) {
+const std::string Literal::print() const { return "LITERAL"; }
+
+std::ostream &operator<<(std::ostream &os, const Node &node) {
   return os << node.print();
 }
 } // namespace AplAst
