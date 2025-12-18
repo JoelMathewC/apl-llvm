@@ -1,32 +1,32 @@
-%option noyywrap
-
 %{
+    #include "foolexer.hpp"
     #include "parser.tab.hpp"
-    int yyerror(const char *sp);
+    typedef yy::parser::token token;
+
+    #undef  YY_DECL
+    #define YY_DECL int FooLexer::yylex(yy::parser::value_type *const yylval)
 %}
+
+%option c++ noyywrap
+%option yyclass="FooLexer"
 
 %%
 
-"\n"    {return INPUT_COMPLETED;}
-"quit()"    {return EXIT;}
+"\n"    {return token::INPUT_COMPLETED;}
+"quit()"    {return token::EXIT;}
 
 [ \t]+
 (⍝.*)
 
-"←"     {return LEFT_ARROW;}
-"+"		{return PLUS;}
-"-"		{return MINUS;}
-"x"		{return TIMES;}
-"*"		{return STAR;}
-"÷"		{return DIVIDE;}
-"⋄"     {return DIAMOND;}
+"←"     {return token::LEFT_ARROW;}
+"+"		{return token::PLUS;}
+"-"		{return token::MINUS;}
+"x"		{return token::TIMES;}
+"*"		{return token::STAR;}
+"÷"		{return token::DIVIDE;}
+"⋄"     {return token::DIAMOND;}
 
-[_a-zA-Z⍙∆]+ {return VARIABLE;}
-[0-9]+(\.[0-9]+)? {return LITERAL;}
+[_a-zA-Z⍙∆]+ {return token::VARIABLE;}
+[0-9]+(\.[0-9]+)? {return token::LITERAL;}
 
 %%
-
-int yyerror(const char *sp) {
-    printf("Error could not parse: %s", sp);
-    exit(1);
-}

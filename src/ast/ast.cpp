@@ -2,70 +2,80 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 namespace AplAst {
-const std::string Term::print() const { return "TERM"; }
+const string Term::print() const { return "TERM"; }
 
-std::ostream &operator<<(std::ostream &os, const Node &node) {
-  return os << node.print();
+ostream &operator<<(ostream &os, const Term &term) {
+  return os << term.print();
 }
 
-#pragma region Literal
-Literal *Literal::create(double val) {
-  std::vector<double> vec = {val};
-  return new Literal(vec);
+// #pragma region Literal
+unique_ptr<Literal> Literal::create(double val) {
+  vector<double> vec = {val};
+  return std::move(make_unique<Literal>(vec));
 }
 
-Literal *Literal::create(std::vector<double> old_vec, double new_elem) {
+unique_ptr<Literal> Literal::create(vector<double> old_vec, double new_elem) {
   old_vec.push_back(new_elem);
-  return new Literal(old_vec);
+  return std::move(make_unique<Literal>(old_vec));
 }
 
-const std::vector<double> &Literal::getVal() const { return this->val; }
-const std::string Literal::print() const { return "LITERAL"; }
-#pragma endregion Literal
+const vector<double> &Literal::getVal() const { return this->val; }
+const string Literal::print() const { return "LITERAL"; }
+// #pragma endregion Literal
 
-#pragma region Variable
-const std::string &Variable::getName() const { return name; }
-
-const std::string Variable::print() const {
-  return "VARIABLE{" + this->name + "}";
-}
-#pragma endregion Variable
-
-#pragma region Call
-Call *Call::create(const Operator op, std::unique_ptr<Node> arg) {
-  std::vector<std::unique_ptr<Node>> vec = {std::move(arg)};
-  return new Call(op, vec);
+// #pragma region Variable
+unique_ptr<Variable> Variable::create(const string &name) {
+  return std::move(make_unique<Variable>(name));
 }
 
-Call *Call::create(const Operator op, std::unique_ptr<Node> arg1,
-                           std::unique_ptr<Node> arg2) {
-  std::vector<std::unique_ptr<Node>> vec = {std::move(arg1), std::move(arg2)};
-  return new Call(op, vec);
+const string &Variable::getName() const { return name; }
+
+const string Variable::print() const { return "VARIABLE{" + this->name + "}"; }
+// #pragma endregion Variable
+
+// #pragma region Call
+unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg) {
+  vector<unique_ptr<Node>> vec;
+  vec.push_back(std::move(arg));
+  return std::move(make_unique<Call>(op, vec));
+}
+
+unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg1,
+                              unique_ptr<Node> &arg2) {
+  vector<unique_ptr<Node>> vec;
+  vec.push_back(std::move(arg1));
+  vec.push_back(std::move(arg2));
+  return std::move(make_unique<Call>(op, vec));
 }
 const Operator &Call::getOp() const { return this->op; }
-const std::vector<std::unique_ptr<Node>> &Call::getArgs() const {
-  return this->args;
-};
-const std::string Call::print() const {
+const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; };
+const string Call::print() const {
   // generate comma seperated string for arguments
-  std::string args_str = "";
-  for (int i = 0; i < this->args.size(); ++i) {
+  string args_str = "";
+  for (auto &arg : this->args) {
     if (args_str.size() > 0)
       args_str += ',';
-    args_str += this->args[i]->print();
+    args_str += arg->print();
   }
-  return "Call(" + this->op + ',' + args_str + ")";
-}
-#pragma endregion Call
 
-#pragma region AssignStmt
-const std::unique_ptr<Variable> &AssignStmt::getLhs() const {
-  return this->lhs;
+  // TODO: cast this->op to appropriate string
+  return "Call(" + string(1, this->op) + string(1, ',') + args_str + ")";
 }
-const std::unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
-const std::string AssignStmt::print() const {
+// #pragma endregion Call
+
+// #pragma region AssignStmt
+unique_ptr<AssignStmt> AssignStmt::create(unique_ptr<Variable> &lhs,
+                                          unique_ptr<Node> &rhs) {
+  return std::move(make_unique<AssignStmt>(lhs, rhs));
+}
+
+const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
+const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
+const string AssignStmt::print() const {
   return "Assign[" + this->lhs->print() + " = " + this->rhs->print() + "]";
 }
-#pragma endregion AssignStmt
+// #pragma endregion AssignStmt
 } // namespace AplAst

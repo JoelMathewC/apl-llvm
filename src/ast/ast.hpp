@@ -8,13 +8,15 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 namespace AplAst {
 enum Operator { ADD, SUB, MUL, DIV, EXP };
 
 // Root base class for APL AST
 class Term {
 public:
-  virtual const std::string print() const;
+  virtual const string print() const;
 };
 
 // Abstract class for nodes in APL AST that evaluate to expressions
@@ -25,55 +27,58 @@ class Tree : public Term {};
 
 // Literal node in the APL AST
 class Literal : public Node {
-  const std::vector<double> val;
+  const vector<double> val;
 
 public:
-  Literal(const std::vector<double> val) : val(val) {}
-  static Literal *create(double val);
-  static Literal *create(std::vector<double> old_vec, double new_elem);
-  const std::vector<double> &getVal() const;
-  const std::string print() const override;
+  Literal(const vector<double> val) : val(val) {}
+  static unique_ptr<Literal> create(double val);
+  static unique_ptr<Literal> create(vector<double> old_vec, double new_elem);
+  const vector<double> &getVal() const;
+  const string print() const override;
 };
 
 // Variable node in the APL AST
 class Variable : public Node {
-  const std::string name;
+  const string name;
 
 public:
-  Variable(const std::string &name) : name(name) {}
-  const std::string &getName() const;
-  const std::string print() const override;
+  Variable(const string &name) : name(name) {}
+  static unique_ptr<Variable> create(const string &name);
+  const string &getName() const;
+  const string print() const override;
 };
 
 // An APL AST expression node that evaluates op on args
 class Call : public Node {
   const Operator op;
-  const std::vector<std::unique_ptr<Node>> args;
+  const vector<unique_ptr<Node>> args;
 
 public:
-  Call(const Operator op, std::vector<std::unique_ptr<Node>> args)
+  Call(const Operator op, vector<unique_ptr<Node>> &args)
       : op(op), args(std::move(args)) {}
-  static Call *create(const Operator op, std::unique_ptr<Node> arg);
-  static Call *create(const Operator op, std::unique_ptr<Node> arg1,
-                      std::unique_ptr<Node> arg2);
+  static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg);
+  static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg1,
+                                     unique_ptr<Node> &arg2);
   const Operator &getOp() const;
-  const std::vector<std::unique_ptr<Node>> &getArgs() const;
-  const std::string print() const override;
+  const vector<unique_ptr<Node>> &getArgs() const;
+  const string print() const override;
 };
 
 // Assignment statements in the APL AST
 class AssignStmt : public Tree {
-  const std::unique_ptr<Variable> lhs;
-  const std::unique_ptr<Node> rhs;
+  const unique_ptr<Variable> lhs;
+  const unique_ptr<Node> rhs;
 
 public:
-  AssignStmt(std::unique_ptr<Variable> lhs, std::unique_ptr<Node> rhs)
+  AssignStmt(unique_ptr<Variable> &lhs, unique_ptr<Node> &rhs)
       : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
-  const std::unique_ptr<Variable> &getLhs() const;
-  const std::unique_ptr<Node> &getRhs() const;
-  const std::string print() const override;
+  static unique_ptr<AssignStmt> create(unique_ptr<Variable> &lhs,
+                                       unique_ptr<Node> &rhs);
+  const unique_ptr<Variable> &getLhs() const;
+  const unique_ptr<Node> &getRhs() const;
+  const string print() const override;
 };
 
 // ostream overlead for APL AST Node
-std::ostream &operator<<(std::ostream &os, const Term &term);
+ostream &operator<<(ostream &os, const Term &term);
 } // namespace AplAst

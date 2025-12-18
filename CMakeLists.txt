@@ -27,9 +27,9 @@ add_flex_bison_dependency(LEXER PARSER)
 add_executable(apl-interpreter)
 target_sources(apl-interpreter
   PRIVATE
-    ${PARSER_DIR}/lexer.yy.cpp
-    ${PARSER_DIR}/parser.tab.cpp
-    src/ast/ast.cpp
+    ${SRC_DIR}/ast/ast.cpp
+    ${SRC_DIR}/lexer.yy.cpp
+    ${SRC_DIR}/parser.tab.cpp
 )
 
 # Compile GoogleTest
