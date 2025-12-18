@@ -70,9 +70,9 @@ class AssignStmt : public Tree {
   const unique_ptr<Node> rhs;
 
 public:
-  AssignStmt(unique_ptr<Variable> &lhs, unique_ptr<Node> &rhs)
-      : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
-  static unique_ptr<AssignStmt> create(unique_ptr<Variable> &lhs,
+  AssignStmt(const string &varName, unique_ptr<Node> &rhs)
+      : lhs(make_unique<Variable>(varName)), rhs(std::move(rhs)) {}
+  static unique_ptr<AssignStmt> create(const string &varName,
                                        unique_ptr<Node> &rhs);
   const unique_ptr<Variable> &getLhs() const;
   const unique_ptr<Node> &getRhs() const;

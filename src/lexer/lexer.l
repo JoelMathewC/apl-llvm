@@ -1,14 +1,19 @@
 %{
-    #include "foolexer.hpp"
-    #include "parser.tab.hpp"
+    #include "AplLexer.hpp"
+    #include "../parser/parser.g.hpp"
     typedef yy::parser::token token;
 
+    // Redefine the yylex() definition to include one argument.
     #undef  YY_DECL
-    #define YY_DECL int FooLexer::yylex(yy::parser::value_type *const yylval)
+    #define YY_DECL int AplLexer::yylex(yy::parser::value_type *const yylval)
 %}
 
-%option c++ noyywrap
-%option yyclass="FooLexer"
+/*
+ Set language to C++
+ Assume that yywrap will always return 1
+ Set the lexer class to be AplLexer, instead of the default
+*/
+%option c++ noyywrap yyclass="AplLexer"
 
 %%
 

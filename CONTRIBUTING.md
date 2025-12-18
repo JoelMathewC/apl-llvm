@@ -11,6 +11,9 @@ Thank you for your interest in contributing to APL-LLVM. All contributions can b
 ## Code Style
 When in doubt refer to the Google [C++ Style Guide](https://google.github.io/styleguide/cppguide.html). The rest of this section details specific conventions followed throughout the project.
 
+### Naming
+1. All generated files are suffixed with `.g.cpp` / `.g.hpp`
+
 ### Formatting
 This project uses `clang-format` as the formatter for the project. This tool can be downloaded as a VSCode extension for formatting on save.
 

@@ -67,9 +67,9 @@ const string Call::print() const {
 // #pragma endregion Call
 
 // #pragma region AssignStmt
-unique_ptr<AssignStmt> AssignStmt::create(unique_ptr<Variable> &lhs,
+unique_ptr<AssignStmt> AssignStmt::create(const string &varName,
                                           unique_ptr<Node> &rhs) {
-  return std::move(make_unique<AssignStmt>(lhs, rhs));
+  return std::move(make_unique<AssignStmt>(varName, rhs));
 }
 
 const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }

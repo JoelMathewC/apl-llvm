@@ -1,6 +1,6 @@
-src/lexer.yy.cpp
-src/parser.tab.cpp
-src/parser.tab.hpp
+src/lexer/lexer.g.cpp
+src/parser/parser.g.cpp
+src/parser/parser.g.hpp
 build/
 .vscode/
 *.dSYM/

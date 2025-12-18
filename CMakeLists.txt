@@ -13,13 +13,16 @@ find_package(GTest 1.17 REQUIRED)
 
 # Generate lexer and parser
 set(SRC_DIR "src")
-set(PARSER_DIR "${CMAKE_CURRENT_BINARY_DIR}/../src/")
+set(LEXER_DIR "src/lexer")
+set(PARSER_DIR "src/parser")
+set(BINARY_RELATIVE_LEXER_DIR "${CMAKE_CURRENT_BINARY_DIR}/../src/lexer")
+set(BINARY_RELATIVE_PARSER_DIR "${CMAKE_CURRENT_BINARY_DIR}/../src/parser")
 flex_target(LEXER 
-    "${SRC_DIR}/lexer.l" "${PARSER_DIR}/lexer.yy.cpp"
+    "${LEXER_DIR}/lexer.l" "${BINARY_RELATIVE_LEXER_DIR}/lexer.g.cpp"
 )
 bison_target(PARSER 
-    "${SRC_DIR}/parser.y" 
-    "${PARSER_DIR}/parser.tab.cpp" DEFINES_FILE "${PARSER_DIR}/parser.tab.hpp"
+    "${PARSER_DIR}/parser.y" 
+    "${BINARY_RELATIVE_PARSER_DIR}/parser.g.cpp" DEFINES_FILE "${BINARY_RELATIVE_PARSER_DIR}/parser.g.hpp"
 )
 add_flex_bison_dependency(LEXER PARSER)
 
@@ -27,9 +30,10 @@ add_flex_bison_dependency(LEXER PARSER)
 add_executable(apl-interpreter)
 target_sources(apl-interpreter
   PRIVATE
+    ${SRC_DIR}/main.cpp
     ${SRC_DIR}/ast/ast.cpp
-    ${SRC_DIR}/lexer.yy.cpp
-    ${SRC_DIR}/parser.tab.cpp
+    ${LEXER_DIR}/lexer.g.cpp
+    ${PARSER_DIR}/parser.g.cpp
 )
 
 # Compile GoogleTest
