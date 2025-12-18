@@ -14,12 +14,12 @@ ostream &operator<<(ostream &os, const Term &term) {
 // #pragma region Literal
 unique_ptr<Literal> Literal::create(double val) {
   vector<double> vec = {val};
-  return std::move(make_unique<Literal>(vec));
+  return make_unique<Literal>(vec);
 }
 
-unique_ptr<Literal> Literal::create(vector<double> old_vec, double new_elem) {
-  old_vec.push_back(new_elem);
-  return std::move(make_unique<Literal>(old_vec));
+unique_ptr<Literal> Literal::create(vector<double> vec, double new_elem) {
+  vec.push_back(new_elem);
+  return make_unique<Literal>(vec);
 }
 
 const vector<double> &Literal::getVal() const { return this->val; }
@@ -28,7 +28,7 @@ const string Literal::print() const { return "LITERAL"; }
 
 // #pragma region Variable
 unique_ptr<Variable> Variable::create(const string &name) {
-  return std::move(make_unique<Variable>(name));
+  return make_unique<Variable>(name);
 }
 
 const string &Variable::getName() const { return name; }
@@ -40,7 +40,7 @@ const string Variable::print() const { return "VARIABLE{" + this->name + "}"; }
 unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;
   vec.push_back(std::move(arg));
-  return std::move(make_unique<Call>(op, vec));
+  return make_unique<Call>(op, vec);
 }
 
 unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg1,
@@ -48,7 +48,7 @@ unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg1,
   vector<unique_ptr<Node>> vec;
   vec.push_back(std::move(arg1));
   vec.push_back(std::move(arg2));
-  return std::move(make_unique<Call>(op, vec));
+  return make_unique<Call>(op, vec);
 }
 const Operator &Call::getOp() const { return this->op; }
 const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; };
@@ -69,7 +69,7 @@ const string Call::print() const {
 // #pragma region AssignStmt
 unique_ptr<AssignStmt> AssignStmt::create(const string &varName,
                                           unique_ptr<Node> &rhs) {
-  return std::move(make_unique<AssignStmt>(varName, rhs));
+  return make_unique<AssignStmt>(varName, rhs);
 }
 
 const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }

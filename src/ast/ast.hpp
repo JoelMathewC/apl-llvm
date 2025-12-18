@@ -32,7 +32,7 @@ class Literal : public Node {
 public:
   Literal(const vector<double> val) : val(val) {}
   static unique_ptr<Literal> create(double val);
-  static unique_ptr<Literal> create(vector<double> old_vec, double new_elem);
+  static unique_ptr<Literal> create(vector<double> vec, double new_elem);
   const vector<double> &getVal() const;
   const string print() const override;
 };
@@ -58,7 +58,7 @@ public:
       : op(op), args(std::move(args)) {}
   static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg);
   static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg1,
-                                     unique_ptr<Node> &arg2);
+                                 unique_ptr<Node> &arg2);
   const Operator &getOp() const;
   const vector<unique_ptr<Node>> &getArgs() const;
   const string print() const override;
