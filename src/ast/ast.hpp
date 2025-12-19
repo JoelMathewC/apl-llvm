@@ -30,7 +30,7 @@ class Literal : public Node {
   const vector<double> val;
 
 public:
-  Literal(const vector<double> val) : val(val) {}
+  Literal(const vector<double> val);
   static unique_ptr<Literal> create(double val);
   static unique_ptr<Literal> create(vector<double> vec, double new_elem);
   const vector<double> &getVal() const;
@@ -42,7 +42,7 @@ class Variable : public Node {
   const string name;
 
 public:
-  Variable(const string &name) : name(name) {}
+  Variable(const string &name);
   static unique_ptr<Variable> create(const string &name);
   const string &getName() const;
   const string print() const override;
@@ -54,8 +54,7 @@ class Call : public Node {
   const vector<unique_ptr<Node>> args;
 
 public:
-  Call(const Operator op, vector<unique_ptr<Node>> &args)
-      : op(op), args(std::move(args)) {}
+  Call(const Operator op, vector<unique_ptr<Node>> &args);
   static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg);
   static unique_ptr<Call> create(const Operator op, unique_ptr<Node> &arg1,
                                  unique_ptr<Node> &arg2);
@@ -70,8 +69,7 @@ class AssignStmt : public Tree {
   const unique_ptr<Node> rhs;
 
 public:
-  AssignStmt(const string &varName, unique_ptr<Node> &rhs)
-      : lhs(make_unique<Variable>(varName)), rhs(std::move(rhs)) {}
+  AssignStmt(const string &varName, unique_ptr<Node> &rhs);
   static unique_ptr<AssignStmt> create(const string &varName,
                                        unique_ptr<Node> &rhs);
   const unique_ptr<Variable> &getLhs() const;
