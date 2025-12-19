@@ -36,7 +36,7 @@ unique_ptr<Variable> Variable::create(const string &name) {
 
 const string &Variable::getName() const { return name; }
 
-const string Variable::print() const { return "VARIABLE{" + this->name + "}"; }
+const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
 
 unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;
@@ -74,6 +74,6 @@ unique_ptr<AssignStmt> AssignStmt::create(const string &varName,
 const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
 const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 const string AssignStmt::print() const {
-  return "Assign[" + this->lhs->print() + " = " + this->rhs->print() + "]";
+  return "Assign(" + this->lhs->print() + "," + this->rhs->print() + ")";
 }
 } // namespace AplAst

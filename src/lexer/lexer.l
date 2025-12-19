@@ -1,4 +1,5 @@
 %{
+    
     #include "AplLexer.hpp"
     #include "../parser/parser.g.hpp"
     typedef yy::parser::token token;
@@ -15,19 +16,22 @@
 */
 %option c++ noyywrap yyclass="AplLexer"
 
-OPERATOR [+x*÷]
+OPERATOR [+-x*÷]
 
 %%
 [ \t]+
 (⍝.*)
 
-"\n"    {return token::INPUT_COMPLETED;}
+"\n"        {return token::INPUT_COMPLETED;}
 "quit()"    {return token::EXIT;}
+[()]	    {return *yytext;}
 
-"←"     {return token::LEFT_ARROW;}
-"⋄"     {return token::DIAMOND;}
+"←" {return token::LEFT_ARROW;}
+"⋄" {return token::DIAMOND;}
 
-{OPERATOR}		{yylval->emplace<char>(*yytext); return token::OPERATOR;}
-[_a-zA-Z⍙∆]+ {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
-[0-9]+(\.[0-9]+)? {yylval->emplace<double>(std::stod(yytext)); return token::LITERAL;}
+{OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
+[_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
+[0-9]+(\.[0-9]+)?   {yylval->emplace<double>(std::stod(yytext)); return token::LITERAL;}
+
+.   {LexerError(("unknown character: " + std::string(1,*yytext)).c_str());}
 %%
