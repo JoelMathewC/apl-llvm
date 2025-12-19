@@ -42,13 +42,13 @@ set(TEST_DIR "test")
 enable_testing()
 
 add_executable(
-  hello_test
-  ${TEST_DIR}/hello_test.cpp
+  parser-test
+  ${TEST_DIR}/ParserTest.cpp
 )
 target_link_libraries(
-  hello_test
+  parser-test
   GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(hello_test)
+gtest_discover_tests(parser-test)

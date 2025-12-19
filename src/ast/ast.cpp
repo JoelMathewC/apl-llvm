@@ -1,17 +1,22 @@
 #include "ast.hpp"
 #include <iostream>
+#include <map>
 #include <vector>
 
 using namespace std;
 
 namespace AplAst {
+map<Operator, string> operatorToStringMapping = {
+    {Operator::ADD, "add"}, {Operator::SUB, "sub"}, {Operator::MUL, "mul"},
+    {Operator::DIV, "div"}, {Operator::EXP, "exp"},
+};
+
 const string Term::print() const { return "TERM"; }
 
 ostream &operator<<(ostream &os, const Term &term) {
   return os << term.print();
 }
 
-// #pragma region Literal
 unique_ptr<Literal> Literal::create(double val) {
   vector<double> vec = {val};
   return make_unique<Literal>(vec);
@@ -24,9 +29,7 @@ unique_ptr<Literal> Literal::create(vector<double> vec, double new_elem) {
 
 const vector<double> &Literal::getVal() const { return this->val; }
 const string Literal::print() const { return "LITERAL"; }
-// #pragma endregion Literal
 
-// #pragma region Variable
 unique_ptr<Variable> Variable::create(const string &name) {
   return make_unique<Variable>(name);
 }
@@ -34,9 +37,7 @@ unique_ptr<Variable> Variable::create(const string &name) {
 const string &Variable::getName() const { return name; }
 
 const string Variable::print() const { return "VARIABLE{" + this->name + "}"; }
-// #pragma endregion Variable
 
-// #pragma region Call
 unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;
   vec.push_back(std::move(arg));
@@ -61,12 +62,10 @@ const string Call::print() const {
     args_str += arg->print();
   }
 
-  // TODO: cast this->op to appropriate string
-  return "Call(" + string(1, this->op) + string(1, ',') + args_str + ")";
+  return "Call(" + operatorToStringMapping[this->op] + string(1, ',') +
+         args_str + ")";
 }
-// #pragma endregion Call
 
-// #pragma region AssignStmt
 unique_ptr<AssignStmt> AssignStmt::create(const string &varName,
                                           unique_ptr<Node> &rhs) {
   return make_unique<AssignStmt>(varName, rhs);
@@ -77,5 +76,4 @@ const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 const string AssignStmt::print() const {
   return "Assign[" + this->lhs->print() + " = " + this->rhs->print() + "]";
 }
-// #pragma endregion AssignStmt
 } // namespace AplAst
