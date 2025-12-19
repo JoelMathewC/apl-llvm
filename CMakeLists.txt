@@ -41,9 +41,13 @@ set(TEST_DIR "test")
 
 enable_testing()
 
-add_executable(
-  parser-test
-  ${TEST_DIR}/ParserTest.cpp
+add_executable(parser-test)
+target_sources(parser-test
+  PRIVATE
+    ${TEST_DIR}/ParserTest.cpp
+    ${SRC_DIR}/ast/ast.cpp
+    ${LEXER_DIR}/lexer.g.cpp
+    ${PARSER_DIR}/parser.g.cpp
 )
 target_link_libraries(
   parser-test
