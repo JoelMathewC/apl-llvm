@@ -11,7 +11,6 @@ int main() {
   while (true) {
     printf("\033[35m>>>\033[0m ");
     auto ast = parser();
-    printf("\n");
   }
 
   return 0;

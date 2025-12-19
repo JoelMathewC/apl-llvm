@@ -39,7 +39,7 @@
 %right DIAMOND OPERATOR
 
 %%
-start: prgm INPUT_COMPLETED {std::cout << *$1; $$ = std::move($1); YYACCEPT;}
+start: prgm INPUT_COMPLETED {std::cout << *$1 << "\n"; $$ = std::move($1); YYACCEPT;}
     | INPUT_COMPLETED       {YYACCEPT;}
     | EXIT                  {exit(0);}
 

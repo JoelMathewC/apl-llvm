@@ -2,6 +2,7 @@
     
     #include "AplLexer.hpp"
     #include "../parser/parser.g.hpp"
+    #include <iostream>
     typedef yy::parser::token token;
 
     // Redefine the yylex() definition to include one argument.
@@ -33,5 +34,5 @@ OPERATOR [+-x*÷]
 [_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<double>(std::stod(yytext)); return token::LITERAL;}
 
-.   {LexerError(("unknown character: " + std::string(1,*yytext)).c_str());}
+.   {printf("unknown character: %c", *yytext); return *yytext;}
 %%
