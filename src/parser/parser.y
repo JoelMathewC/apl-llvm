@@ -47,7 +47,7 @@ prgm: prgm DIAMOND prgm {}
     | op_expr           {$$ = std::move($1);} 
     | assign_stmt       {$$ = std::move($1);}
 
-assign_stmt: VARIABLE LEFT_ARROW op_expr    {cout << $1; $$ = AplAst::AssignStmt::create($1,$3);}
+assign_stmt: VARIABLE LEFT_ARROW op_expr    {$$ = AplAst::AssignStmt::create($1,$3);}
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
     | OPERATOR op_expr          {}    

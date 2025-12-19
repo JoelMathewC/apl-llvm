@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
+#include "../src/lexer/AplLexer.hpp"
+#include "../src/parser/parser.g.hpp"
 
-// Demonstrate some basic assertions.
-TEST(HelloTest, BasicAssertions) {
-  // Expect two strings not to be equal.
-  EXPECT_STRNE("hello", "world");
-  // Expect equality.
-  EXPECT_EQ(7 * 6, 42);
+TEST(ParserTest, CanParseLiteral) {
+  AplLexer lexer;
+  yy::parser parser(lexer);
 }
