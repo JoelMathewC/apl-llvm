@@ -17,7 +17,7 @@
 */
 %option c++ noyywrap yyclass="AplLexer"
 
-OPERATOR [+-x*÷]
+OPERATOR [+\-x*÷]
 
 %%
 [ \t]+
