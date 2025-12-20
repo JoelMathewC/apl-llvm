@@ -5,13 +5,15 @@ This is an interpreter for the APL programming language built using LLVM.
 ## Setup
 ### CMake Build
 ```bash
-cmake -B build/
+# the -DLLVM_DIR param needs to point to the LLVM install path on your machine
+cmake -B build -DLLVM_DIR=/usr/local/Cellar/llvm/21.1.7/
 cmake --build build/ --config Release
 ```
 
 ### Debugging
 ```bash
-cmake -B build/
+# the -DLLVM_DIR param needs to point to the LLVM install path on your machine
+cmake -B build -DLLVM_DIR=/usr/local/Cellar/llvm/21.1.7/
 cmake --build build/ --config Debug
 ```
 
