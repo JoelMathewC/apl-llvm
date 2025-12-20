@@ -20,8 +20,9 @@
     #define yylex lexer.yylex
 }
 
-// Configure the parser to accept the lexer as an argument.
+// Configure the parser to accept the lexer and ast return ptr as an argument.
 %parse-param {AplLexer &lexer}
+%parse-param {std::unique_ptr<AplAst::Term>& ast_ret_ptr}
 
 // Using a union here prevents us from using smart pointers
 // https://www.gnu.org/software/bison/manual/html_node/C_002b_002b-Unions.html
@@ -39,7 +40,7 @@
 %right DIAMOND OPERATOR
 
 %%
-start: prgm INPUT_COMPLETED {std::cout << *$1 << "\n"; $$ = std::move($1); YYACCEPT;}
+start: prgm INPUT_COMPLETED {ast_ret_ptr = std::move($1); YYACCEPT;}
     | INPUT_COMPLETED       {YYACCEPT;}
     | EXIT                  {exit(0);}
 

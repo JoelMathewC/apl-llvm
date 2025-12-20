@@ -4,5 +4,6 @@
 
 TEST(ParserTest, CanParseLiteral) {
   AplLexer lexer;
-  yy::parser parser(lexer);
+  std::unique_ptr<AplAst::Term> ast_ret_ptr;
+  yy::parser parser(lexer, ast_ret_ptr);
 }
