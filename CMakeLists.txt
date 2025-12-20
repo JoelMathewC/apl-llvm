@@ -31,6 +31,7 @@ add_executable(apl-interpreter)
 target_sources(apl-interpreter
   PRIVATE
     ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
@@ -45,6 +46,7 @@ add_executable(parser-test)
 target_sources(parser-test
   PRIVATE
     ${TEST_DIR}/ParserTest.cpp
+    ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp

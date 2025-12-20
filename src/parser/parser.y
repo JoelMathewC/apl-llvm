@@ -51,7 +51,7 @@ assign_stmt: VARIABLE LEFT_ARROW op_expr    {$$ = AplAst::AssignStmt::create($1,
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
     | OPERATOR op_expr          {}    
-    | op_expr OPERATOR op_expr  {$$ = AplAst::Call::create(AplAst::Operator::ADD, $1, $3);}    
+    | op_expr OPERATOR op_expr  {$$ = AplAst::Call::create($2, $1, $3);}    
     | array                     {$$ = std::move($1);}   
     | VARIABLE                  {$$ = AplAst::Variable::create($1);}
 

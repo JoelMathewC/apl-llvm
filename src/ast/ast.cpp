@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "op.hpp"
 #include <iostream>
 #include <map>
 #include <vector>
@@ -6,16 +7,27 @@
 using namespace std;
 
 namespace AplAst {
-map<Operator, string> operatorToStringMapping = {
-    {Operator::ADD, "add"}, {Operator::SUB, "sub"}, {Operator::MUL, "mul"},
-    {Operator::DIV, "div"}, {Operator::EXP, "exp"},
-};
-
-const string Term::print() const { return "TERM"; }
-
-ostream &operator<<(ostream &os, const Term &term) {
-  return os << term.print();
+// LocalFunctions section
+unique_ptr<AplOp::Op> createOp(char op) {
+  // TODO: add support for ÷
+  switch (op) {
+  case '+':
+    return make_unique<AplOp::AddOp>();
+  case '-':
+    return make_unique<AplOp::SubOp>();
+  case 'x':
+    return make_unique<AplOp::MulOp>();
+  case '*':
+    return make_unique<AplOp::ExpOp>();
+  default:
+    return make_unique<AplOp::Op>();
+  }
 }
+// End LocalFunctions section
+
+// Term section
+const string Term::print() const { return "TERM"; }
+// End Term section
 
 // Literal section
 Literal::Literal(const vector<double> val) : val(val) {}
@@ -47,16 +59,16 @@ const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
 // end Variable section
 
 // Call section
-Call::Call(const Operator op, vector<unique_ptr<Node>> &args)
-    : op(op), args(std::move(args)) {}
+Call::Call(char op, vector<unique_ptr<Node>> &args)
+    : op(createOp(op)), args(std::move(args)) {}
 
-unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg) {
+unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;
   vec.push_back(std::move(arg));
   return make_unique<Call>(op, vec);
 }
 
-unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg1,
+unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg1,
                               unique_ptr<Node> &arg2) {
   vector<unique_ptr<Node>> vec;
   vec.push_back(std::move(arg1));
@@ -64,7 +76,7 @@ unique_ptr<Call> Call::create(const Operator op, unique_ptr<Node> &arg1,
   return make_unique<Call>(op, vec);
 }
 
-const Operator &Call::getOp() const { return this->op; }
+const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
 
 const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; };
 
@@ -77,8 +89,7 @@ const string Call::print() const {
     args_str += arg->print();
   }
 
-  return "Call(" + operatorToStringMapping[this->op] + string(1, ',') +
-         args_str + ")";
+  return "Call(" + this->op->print() + string(1, ',') + args_str + ")";
 }
 // end Call section
 
@@ -99,4 +110,10 @@ const string AssignStmt::print() const {
   return "Assign(" + this->lhs->print() + "," + this->rhs->print() + ")";
 }
 // end Assign section
+
+// Misc. section
+ostream &operator<<(ostream &os, const Term &term) {
+  return os << term.print();
+}
+// end Misc. section
 } // namespace AplAst
