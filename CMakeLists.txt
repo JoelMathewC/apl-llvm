@@ -12,12 +12,12 @@ find_package(BISON 3.8 REQUIRED)
 find_package(GTest 1.17 REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
 
+# LLVM specific setup
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
 include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
+llvm_map_components_to_libnames(llvm_libs support core irreader)
 
 # Generate lexer and parser
 set(SRC_DIR "src")
@@ -45,16 +45,15 @@ target_sources(apl-interpreter
     ${PARSER_DIR}/parser.g.cpp
 )
 
-llvm_map_components_to_libnames(llvm_libs support core irreader)
 target_link_libraries(
   apl-interpreter
   ${llvm_libs}
 )
 
-# Compile GoogleTest
+# Setup GoogleTest
 set(TEST_DIR "test")
-
 enable_testing()
+include(GoogleTest)
 
 add_executable(parser-test)
 target_sources(parser-test
@@ -71,5 +70,4 @@ target_link_libraries(
   GTest::gtest_main
 )
 
-include(GoogleTest)
 gtest_discover_tests(parser-test)
