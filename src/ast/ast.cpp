@@ -43,7 +43,19 @@ unique_ptr<Literal> Literal::create(vector<double> vec, double new_elem) {
 }
 
 const vector<double> &Literal::getVal() const { return this->val; }
-const string Literal::print() const { return "LITERAL"; }
+const string Literal::print() const {
+  // generate comma seperated string of array
+  string vec_str = "";
+  for (auto &elem : this->val) {
+    vec_str += to_string(elem);
+    vec_str += ",";
+  }
+
+  // remove the trailing comma
+  vec_str.pop_back();
+
+  return "LITERAL(" + vec_str + ")";
+}
 // end Literal section
 
 // Variable section
