@@ -5,6 +5,7 @@
 // https://github.com/DSLs-for-HPC/APL2C
 #pragma once
 
+#include "../codegen/codegen.hpp"
 #include "op.hpp"
 #include "llvm/IR/IRBuilder.h"
 #include <iostream>
@@ -19,7 +20,7 @@ class Term {
 public:
   virtual const string print() const;
   virtual ~Term();
-  virtual llvm::Value *codegen();
+  virtual llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager);
 };
 
 // Abstract class for nodes in APL AST that evaluate to expressions
@@ -30,15 +31,15 @@ class Tree : public Term {};
 
 // Literal node in the APL AST
 class Literal : public Node {
-  const vector<double> val;
+  const vector<float> val;
 
 public:
-  Literal(const vector<double> val);
-  static unique_ptr<Literal> create(double val);
-  static unique_ptr<Literal> create(vector<double> vec, double new_elem);
-  const vector<double> &getVal() const;
+  Literal(const vector<float> val);
+  static unique_ptr<Literal> create(float val);
+  static unique_ptr<Literal> create(vector<float> vec, float new_elem);
+  const vector<float> &getVal() const;
   const string print() const override;
-  llvm::Value *codegen() override;
+  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
 };
 
 // Variable node in the APL AST
@@ -50,7 +51,7 @@ public:
   static unique_ptr<Variable> create(const string &name);
   const string &getName() const;
   const string print() const override;
-  llvm::Value *codegen() override;
+  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
 };
 
 // An APL AST expression node that evaluates op on args
@@ -66,7 +67,7 @@ public:
   const unique_ptr<AplOp::Op> &getOp() const;
   const vector<unique_ptr<Node>> &getArgs() const;
   const string print() const override;
-  llvm::Value *codegen() override;
+  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
 };
 
 // Assignment statements in the APL AST
@@ -81,7 +82,7 @@ public:
   const unique_ptr<Variable> &getLhs() const;
   const unique_ptr<Node> &getRhs() const;
   const string print() const override;
-  llvm::Value *codegen() override;
+  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
 };
 
 // ostream overlead for APL AST Node

@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+#include "../codegen/codegen.hpp"
 #include "llvm/IR/IRBuilder.h"
 
 using namespace std;
@@ -30,25 +31,29 @@ unique_ptr<AplOp::Op> createOp(char op) {
 // Term section
 Term::~Term() = default;
 const string Term::print() const { return "TERM"; }
-llvm::Value *Term::codegen() { return 0; }
+llvm::Value *Term::codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) {
+  return nullptr;
+}
 // End Term section
 
 // Literal section
-Literal::Literal(const vector<double> val) : val(val) {}
+Literal::Literal(const vector<float> val) : val(val) {}
 
-unique_ptr<Literal> Literal::create(double val) {
-  vector<double> vec = {val};
+unique_ptr<Literal> Literal::create(float val) {
+  vector<float> vec = {val};
   return make_unique<Literal>(vec);
 }
 
-unique_ptr<Literal> Literal::create(vector<double> vec, double new_elem) {
+unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
   vec.push_back(new_elem);
   return make_unique<Literal>(vec);
 }
 
-const vector<double> &Literal::getVal() const { return this->val; }
+const vector<float> &Literal::getVal() const { return this->val; }
 
-llvm::Value *Literal::codegen() { return 0; }
+llvm::Value *Literal::codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) {
+  return codegenManager->literalCodegen(this->val);
+}
 
 const string Literal::print() const {
   // generate comma seperated string of array
@@ -74,7 +79,10 @@ unique_ptr<Variable> Variable::create(const string &name) {
 
 const string &Variable::getName() const { return name; }
 
-llvm::Value *Variable::codegen() { return 0; }
+llvm::Value *
+Variable::codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) {
+  return codegenManager->variableCodegen(this->name);
+}
 
 const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
 // end Variable section
@@ -99,9 +107,11 @@ unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg1,
 
 const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
 
-const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; };
+const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; }
 
-llvm::Value *Call::codegen() { return 0; }
+llvm::Value *Call::codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) {
+  return nullptr;
+}
 
 const string Call::print() const {
   // generate comma seperated string for arguments
@@ -129,7 +139,10 @@ const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
 
 const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 
-llvm::Value *AssignStmt::codegen() { return 0; }
+llvm::Value *
+AssignStmt::codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) {
+  return nullptr;
+}
 
 const string AssignStmt::print() const {
   return "Assign(" + this->lhs->print() + "," + this->rhs->print() + ")";

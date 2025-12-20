@@ -33,7 +33,7 @@
 %type <std::unique_ptr<AplAst::Literal>> array
 %type <std::unique_ptr<AplAst::AssignStmt>> assign_stmt
 
-%token <double> LITERAL
+%token <float> LITERAL
 %token <std::string> VARIABLE
 %token <char> INPUT_COMPLETED EXIT LEFT_ARROW DIAMOND OPERATOR
 
