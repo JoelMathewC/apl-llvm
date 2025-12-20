@@ -41,6 +41,7 @@ target_sources(apl-interpreter
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
+    ${SRC_DIR}/codegen/codegen.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )
@@ -61,6 +62,7 @@ target_sources(parser-test
     ${TEST_DIR}/ParserTest.cpp
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
+    ${SRC_DIR}/codegen/codegen.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )

@@ -20,7 +20,7 @@ class Term {
 public:
   virtual const string print() const;
   virtual ~Term();
-  virtual llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager);
+  virtual llvm::Value *codegen(Codegen::LlvmCodegen* codegenManager);
 };
 
 // Abstract class for nodes in APL AST that evaluate to expressions
@@ -39,7 +39,7 @@ public:
   static unique_ptr<Literal> create(vector<float> vec, float new_elem);
   const vector<float> &getVal() const;
   const string print() const override;
-  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
+  llvm::Value *codegen(Codegen::LlvmCodegen* codegenManager) override;
 };
 
 // Variable node in the APL AST
@@ -51,7 +51,7 @@ public:
   static unique_ptr<Variable> create(const string &name);
   const string &getName() const;
   const string print() const override;
-  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
+  llvm::Value *codegen(Codegen::LlvmCodegen* codegenManager) override;
 };
 
 // An APL AST expression node that evaluates op on args
@@ -67,7 +67,7 @@ public:
   const unique_ptr<AplOp::Op> &getOp() const;
   const vector<unique_ptr<Node>> &getArgs() const;
   const string print() const override;
-  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
+  llvm::Value *codegen(Codegen::LlvmCodegen* codegenManager) override;
 };
 
 // Assignment statements in the APL AST
@@ -82,7 +82,7 @@ public:
   const unique_ptr<Variable> &getLhs() const;
   const unique_ptr<Node> &getRhs() const;
   const string print() const override;
-  llvm::Value *codegen(unique_ptr<Codegen::LlvmCodegen> codegenManager) override;
+  llvm::Value *codegen(Codegen::LlvmCodegen* codegenManager) override;
 };
 
 // ostream overlead for APL AST Node
