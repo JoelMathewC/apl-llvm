@@ -8,7 +8,7 @@
 using namespace std;
 using namespace llvm;
 
-namespace Codegen {
+namespace AplCodegen {
 LlvmCodegen::LlvmCodegen() {
   this->context = make_unique<LLVMContext>();
   this->module = make_unique<Module>("APL JIT", *this->context);
@@ -36,4 +36,4 @@ Value *LlvmCodegen::variableCodegen(string name) {
 Value *LlvmCodegen::callCodegen() { return 0; }
 
 Value *LlvmCodegen::assignCodegen() { return 0; }
-} // namespace Codegen
+} // namespace AplCodegen

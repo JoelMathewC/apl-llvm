@@ -31,8 +31,7 @@ unique_ptr<AplOp::Op> createOp(char op) {
 // Term section
 Term::~Term() = default;
 const string Term::print() const { return "TERM"; }
-llvm::Value *
-Term::codegen(Codegen::LlvmCodegen* codegenManager) {
+llvm::Value *Term::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 // End Term section
@@ -52,8 +51,7 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 
 const vector<float> &Literal::getVal() const { return this->val; }
 
-llvm::Value *
-Literal::codegen(Codegen::LlvmCodegen* codegenManager) {
+llvm::Value *Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->literalCodegen(this->val);
 }
 
@@ -81,8 +79,7 @@ unique_ptr<Variable> Variable::create(const string &name) {
 
 const string &Variable::getName() const { return name; }
 
-llvm::Value *
-Variable::codegen(Codegen::LlvmCodegen* codegenManager) {
+llvm::Value *Variable::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->variableCodegen(this->name);
 }
 
@@ -111,8 +108,7 @@ const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
 
 const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; }
 
-llvm::Value *
-Call::codegen(Codegen::LlvmCodegen* codegenManager) {
+llvm::Value *Call::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 
@@ -142,8 +138,7 @@ const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
 
 const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 
-llvm::Value *
-AssignStmt::codegen(Codegen::LlvmCodegen* codegenManager) {
+llvm::Value *AssignStmt::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 

@@ -11,7 +11,7 @@ int main() {
   AplLexer lexer;
   std::unique_ptr<AplAst::Term> ast_ret_ptr;
   yy::parser parser(lexer, ast_ret_ptr);
-  auto codegenManager = make_unique<Codegen::LlvmCodegen>();
+  auto codegenManager = make_unique<AplCodegen::LlvmCodegen>();
 
   while (true) {
     cout << "\033[35m>>>\033[0m ";

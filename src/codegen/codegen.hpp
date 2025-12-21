@@ -8,7 +8,7 @@
 using namespace std;
 using namespace llvm;
 
-namespace Codegen {
+namespace AplCodegen {
 class LlvmCodegen {
   unique_ptr<LLVMContext> context;
   unique_ptr<Module> module;
@@ -24,4 +24,4 @@ public:
   Value *callCodegen();
   Value *assignCodegen();
 };
-} // namespace Codegen
+} // namespace AplCodegen
