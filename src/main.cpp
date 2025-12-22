@@ -10,8 +10,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -42,19 +42,29 @@ int main() {
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get());
+    auto llvmFuncIr = codegenManager->wrapInAnonymousFunction(llvmIr);
+    llvmFuncIr->print(errs());
+
+    std::string anonFuncName = "__anon_expr";
+    if (codegenManager->getModule()->getFunction(anonFuncName) == nullptr) {
+      cout << "anon is there.\n";
+    }
+    cout << "func finished!";
 
     // cout << *ast_ret_ptr << "\n"; // Printing out the AST
     // llvmIr->print(errs()); // Printing out the LLVM IR
-
-    auto Sym = ExitOnErr(jit->lookup("__anon_expr"));
-    auto *fp = Sym.toPtr<float (*)()>();
-    cout << "Evaluated to: " << fp() << "\n";
 
     // jit compile
     auto rt = jit->getMainJITDylib().createResourceTracker();
     auto tsm =
         llvm::orc::ThreadSafeModule(std::move(codegenManager->getModule()),
                                     std::move(codegenManager->getContext()));
+    ExitOnErr(jit->addModule(std::move(tsm), rt));
+
+    auto Sym = ExitOnErr(jit->lookup("__anon_expr"));
+    auto *fp = Sym.toPtr<float (*)()>();
+    cout << "Evaluated to: " << fp() << "\n";
+
     ExitOnErr(rt->remove());
   }
 

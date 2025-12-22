@@ -17,11 +17,17 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
+
+# Use llvm-config components to see the list of possible components
+# This cmake function will map all components to assocaited libraries
+# and assign that list to llvm_libs
 llvm_map_components_to_libnames(llvm_libs 
   support 
   core
   irreader
-  X86
+  orcjit
+  x86asmparser
+  x86codegen
 )
 
 # Generate lexer and parser
@@ -40,8 +46,8 @@ bison_target(PARSER
 add_flex_bison_dependency(LEXER PARSER)
 
 # Build the APL Interpreter binary
-add_executable(apl-interpreter)
-target_sources(apl-interpreter
+add_executable(apl-repl)
+target_sources(apl-repl
   PRIVATE
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/ast/op.cpp
@@ -53,7 +59,7 @@ target_sources(apl-interpreter
 )
 
 target_link_libraries(
-  apl-interpreter
+  apl-repl
   ${llvm_libs}
   
 )

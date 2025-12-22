@@ -25,5 +25,6 @@ public:
   Value *assignCodegen();
   unique_ptr<LLVMContext> getContext();
   unique_ptr<Module> getModule();
+  Function *wrapInAnonymousFunction(Value *exprIR);
 };
 } // namespace AplCodegen

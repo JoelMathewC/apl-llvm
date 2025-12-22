@@ -19,7 +19,7 @@ cmake --build build/ --config Debug
 
 ### Running Binary
 ```bash
-./build/apl-interpreter
+./build/apl-repl
 ```
 
 ### Running Tests
