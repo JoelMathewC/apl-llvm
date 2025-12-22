@@ -1,8 +1,9 @@
 #include "codegen.hpp"
-#include "iostream"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include <iostream>
 #include <map>
 
 using namespace std;
@@ -36,4 +37,9 @@ Value *LlvmCodegen::variableCodegen(string name) {
 Value *LlvmCodegen::callCodegen() { return 0; }
 
 Value *LlvmCodegen::assignCodegen() { return 0; }
+
+unique_ptr<LLVMContext> LlvmCodegen::getContext() {
+  return std::move(this->context);
+}
+unique_ptr<Module> LlvmCodegen::getModule() { return std::move(this->module); }
 } // namespace AplCodegen

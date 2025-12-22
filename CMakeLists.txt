@@ -17,7 +17,12 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
-llvm_map_components_to_libnames(llvm_libs support core irreader)
+llvm_map_components_to_libnames(llvm_libs 
+  support 
+  core
+  irreader
+  X86
+)
 
 # Generate lexer and parser
 set(SRC_DIR "src")
@@ -42,6 +47,7 @@ target_sources(apl-interpreter
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
     ${SRC_DIR}/codegen/codegen.cpp
+    ${SRC_DIR}/compiler/compiler.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )
@@ -49,6 +55,7 @@ target_sources(apl-interpreter
 target_link_libraries(
   apl-interpreter
   ${llvm_libs}
+  
 )
 
 # Setup GoogleTest
@@ -63,6 +70,7 @@ target_sources(parser-test
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
     ${SRC_DIR}/codegen/codegen.cpp
+    ${SRC_DIR}/compiler/compiler.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )

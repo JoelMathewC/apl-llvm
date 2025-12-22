@@ -1,6 +1,6 @@
 # APL-LLVM
 
-This is an interpreter for the APL programming language built using LLVM.
+This is a JIT compiler for the APL programming language built using LLVM.
 
 ## Setup
 ### CMake Build

@@ -23,5 +23,7 @@ public:
   Value *variableCodegen(string name);
   Value *callCodegen();
   Value *assignCodegen();
+  unique_ptr<LLVMContext> getContext();
+  unique_ptr<Module> getModule();
 };
 } // namespace AplCodegen
