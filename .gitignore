@@ -1,6 +1,7 @@
 src/lexer/lexer.g.cpp
 src/parser/parser.g.cpp
 src/parser/parser.g.hpp
+CMakePresets.json
 build/
 .vscode/
 *.dSYM/
