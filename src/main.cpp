@@ -37,19 +37,14 @@ int main() {
       ExitOnErr(AplCompiler::JITCompiler::create());
 
   while (true) {
-    auto codegenManager = make_unique<AplCodegen::LlvmCodegen>();
+    auto codegenManager =
+        make_unique<AplCodegen::LlvmCodegen>(jit->getDataLayout());
 
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get());
     auto llvmFuncIr = codegenManager->wrapInAnonymousFunction(llvmIr);
     llvmFuncIr->print(errs());
-
-    std::string anonFuncName = "__anon_expr";
-    if (codegenManager->getModule()->getFunction(anonFuncName) == nullptr) {
-      cout << "anon is there.\n";
-    }
-    cout << "func finished!";
 
     // cout << *ast_ret_ptr << "\n"; // Printing out the AST
     // llvmIr->print(errs()); // Printing out the LLVM IR
@@ -62,7 +57,7 @@ int main() {
     ExitOnErr(jit->addModule(std::move(tsm), rt));
 
     auto Sym = ExitOnErr(jit->lookup("__anon_expr"));
-    auto *fp = Sym.toPtr<float (*)()>();
+    auto *fp = Sym.toPtr<float()>();
     cout << "Evaluated to: " << fp() << "\n";
 
     ExitOnErr(rt->remove());

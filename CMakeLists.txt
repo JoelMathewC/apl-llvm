@@ -61,7 +61,6 @@ target_sources(apl-repl
 target_link_libraries(
   apl-repl
   ${llvm_libs}
-  
 )
 
 # Setup GoogleTest

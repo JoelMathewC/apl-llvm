@@ -16,7 +16,7 @@ class LlvmCodegen {
   map<string, Value *> variableMap;
 
 public:
-  LlvmCodegen();
+  LlvmCodegen(llvm::DataLayout dataLayout);
   ~LlvmCodegen();
 
   Value *literalCodegen(const vector<float> vec);

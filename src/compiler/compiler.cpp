@@ -34,6 +34,10 @@ JITCompiler::JITCompiler(unique_ptr<ExecutionSession> session,
   this->mainJD.addGenerator(
       cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
           dataLayout.getGlobalPrefix())));
+  if (jtmb.getTargetTriple().isOSBinFormatCOFF()) {
+    this->objectLayer.setOverrideObjectFlagsWithResponsibilityFlags(true);
+    this->objectLayer.setAutoClaimResponsibilityForObjectSymbols(true);
+  }
 }
 
 JITCompiler::~JITCompiler() {

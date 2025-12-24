@@ -10,9 +10,10 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
-LlvmCodegen::LlvmCodegen() {
+LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
   this->context = make_unique<LLVMContext>();
   this->module = make_unique<Module>("APL JIT", *this->context);
+  this->module->setDataLayout(dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 }
 
