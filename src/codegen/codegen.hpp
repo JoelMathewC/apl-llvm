@@ -13,6 +13,7 @@ class LlvmCodegen {
   unique_ptr<LLVMContext> context;
   unique_ptr<Module> module;
   unique_ptr<IRBuilder<>> builder;
+  DataLayout dataLayout;
   map<string, Value *> variableMap;
 
 public:
@@ -23,8 +24,7 @@ public:
   Value *variableCodegen(string name);
   Value *callCodegen();
   Value *assignCodegen();
-  unique_ptr<LLVMContext> getContext();
-  unique_ptr<Module> getModule();
+  pair<unique_ptr<LLVMContext>,unique_ptr<Module>> getAndReinitializeContextAndModule();
   Function *wrapInAnonymousFunction(Value *exprIR);
 };
 } // namespace AplCodegen

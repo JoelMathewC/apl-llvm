@@ -12,8 +12,9 @@ using namespace llvm;
 namespace AplCodegen {
 LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
   this->context = make_unique<LLVMContext>();
+  this->dataLayout = dataLayout;
   this->module = make_unique<Module>("APL JIT", *this->context);
-  this->module->setDataLayout(dataLayout);
+  this->module->setDataLayout(this->dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 }
 
@@ -39,10 +40,18 @@ Value *LlvmCodegen::callCodegen() { return 0; }
 
 Value *LlvmCodegen::assignCodegen() { return 0; }
 
-unique_ptr<LLVMContext> LlvmCodegen::getContext() {
-  return std::move(this->context);
+pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
+LlvmCodegen::getAndReinitializeContextAndModule() {
+  auto prev_context = std::move(this->context);
+  auto prev_module = std::move(this->module);
+
+  this->context = make_unique<LLVMContext>();
+  this->dataLayout = dataLayout;
+  this->module = make_unique<Module>("APL JIT", *this->context);
+  this->module->setDataLayout(this->dataLayout);
+
+  return make_pair(std::move(prev_context), std::move(prev_module));
 }
-unique_ptr<Module> LlvmCodegen::getModule() { return std::move(this->module); }
 
 Function *LlvmCodegen::wrapInAnonymousFunction(Value *exprIR) {
   FunctionType *FT = FunctionType::get(Type::getDoubleTy(*this->context),

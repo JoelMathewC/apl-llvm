@@ -16,8 +16,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Target/TargetMachine.h"
 
 using namespace std;
 
@@ -28,39 +26,24 @@ int main() {
   std::unique_ptr<AplAst::Term> ast_ret_ptr;
   yy::parser parser(lexer, ast_ret_ptr);
 
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-  llvm::InitializeNativeTargetAsmParser();
-  llvm::ExitOnError ExitOnErr;
+  unique_ptr<AplCompiler::JITCompiler> jit = AplCompiler::JITCompiler::create();
+  if (jit == nullptr) {
+    cout << "Could not initialize JIT. Exiting ...";
+    exit(0);
+  }
 
-  unique_ptr<AplCompiler::JITCompiler> jit =
-      ExitOnErr(AplCompiler::JITCompiler::create());
+  auto codegenManager =
+      make_unique<AplCodegen::LlvmCodegen>(jit->getDataLayout());
 
   while (true) {
-    auto codegenManager =
-        make_unique<AplCodegen::LlvmCodegen>(jit->getDataLayout());
 
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get());
     auto llvmFuncIr = codegenManager->wrapInAnonymousFunction(llvmIr);
-    llvmFuncIr->print(errs());
-
-    // cout << *ast_ret_ptr << "\n"; // Printing out the AST
-    // llvmIr->print(errs()); // Printing out the LLVM IR
-
-    // jit compile
-    auto rt = jit->getMainJITDylib().createResourceTracker();
-    auto tsm =
-        llvm::orc::ThreadSafeModule(std::move(codegenManager->getModule()),
-                                    std::move(codegenManager->getContext()));
-    ExitOnErr(jit->addModule(std::move(tsm), rt));
-
-    auto Sym = ExitOnErr(jit->lookup("__anon_expr"));
-    auto *fp = Sym.toPtr<float()>();
-    cout << "Evaluated to: " << fp() << "\n";
-
-    ExitOnErr(rt->remove());
+    auto [context, module] =
+        codegenManager->getAndReinitializeContextAndModule();
+    jit->compileAndExecute(std::move(context), std::move(module));
   }
 
   return 0;

@@ -15,8 +15,9 @@
 #include "llvm/IR/LLVMContext.h"
 #include <memory>
 
+using namespace std;
 using namespace llvm;
-using namespace orc;
+using namespace llvm::orc;
 
 namespace AplCompiler {
 
@@ -33,10 +34,9 @@ public:
   JITCompiler(std::unique_ptr<ExecutionSession> session,
               JITTargetMachineBuilder jtmb, DataLayout dataLayout);
   ~JITCompiler();
-  static Expected<std::unique_ptr<JITCompiler>> create();
+  static unique_ptr<JITCompiler> create();
   const DataLayout &getDataLayout() const;
   JITDylib &getMainJITDylib();
-  Error addModule(ThreadSafeModule tsm, ResourceTrackerSP rt);
-  Expected<ExecutorSymbolDef> lookup(StringRef name);
+  void compileAndExecute(unique_ptr<LLVMContext> context, unique_ptr<Module> module);
 };
 } // namespace AplCompiler

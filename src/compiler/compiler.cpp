@@ -13,6 +13,10 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
+
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/TargetMachine.h"
+#include <iostream>
 #include <memory>
 
 using namespace llvm;
@@ -45,10 +49,15 @@ JITCompiler::~JITCompiler() {
     session->reportError(std::move(Err));
 }
 
-Expected<unique_ptr<JITCompiler>> JITCompiler::create() {
+unique_ptr<JITCompiler> JITCompiler::create() {
+  // Prepare the environment to generate code for the machine
+  InitializeNativeTarget();
+  InitializeNativeTargetAsmPrinter();
+  InitializeNativeTargetAsmParser();
+
   auto EPC = SelfExecutorProcessControl::Create();
   if (!EPC)
-    return EPC.takeError();
+    return nullptr;
 
   auto session = make_unique<ExecutionSession>(std::move(*EPC));
 
@@ -57,7 +66,7 @@ Expected<unique_ptr<JITCompiler>> JITCompiler::create() {
 
   auto dataLayout = jtmb.getDefaultDataLayoutForTarget();
   if (!dataLayout)
-    return dataLayout.takeError();
+    return nullptr;
 
   return make_unique<JITCompiler>(std::move(session), std::move(jtmb),
                                   std::move(*dataLayout));
@@ -69,14 +78,15 @@ const DataLayout &JITCompiler::getDataLayout() const {
 
 JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 
-Error JITCompiler::addModule(ThreadSafeModule tsm,
-                             ResourceTrackerSP rt = nullptr) {
-  if (!rt)
-    rt = this->mainJD.getDefaultResourceTracker();
-  return this->compileLayer.add(rt, std::move(tsm));
-}
-
-Expected<ExecutorSymbolDef> JITCompiler::lookup(StringRef name) {
-  return session->lookup({&this->mainJD}, mangle(name.str()));
+void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
+                                    unique_ptr<Module> module) {
+  auto rt = this->mainJD.getDefaultResourceTracker();
+  auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
+  this->compileLayer.add(rt, std::move(tsm));
+  auto Sym =
+      this->session->lookup({&this->mainJD}, mangle("__anon_expr")).get();
+  auto *fp = Sym.toPtr<float (*)()>();
+  cout << "Evaluated to: " << fp() << "\n";
+  rt->remove();
 }
 } // namespace AplCompiler
