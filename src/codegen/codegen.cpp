@@ -11,30 +11,34 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
-LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
+void LlvmCodegen::initializeContextAndModule() {
   this->context = make_unique<LLVMContext>();
-  this->dataLayout = dataLayout;
-  this->module = make_unique<Module>("APL JIT", *this->context);
+  this->module = make_unique<Module>(Constants::moduleName, *this->context);
   this->module->setDataLayout(this->dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 }
 
+LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
+  this->dataLayout = dataLayout;
+  this->initializeContextAndModule();
+}
+
 LlvmCodegen::~LlvmCodegen() = default;
 
-Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
-  return ConstantFP::get(*this->context, APFloat(vec[0]));
+Value *LlvmCodegen::literalCodegen(const float *vecPtr, int size) {
+  return ConstantDataVector::get(*this->context, ArrayRef(vecPtr, size));
 }
 
 Value *LlvmCodegen::variableCodegen(string name) {
-  Value *variable_val = this->variableMap[name];
+  Value *varValue = this->variableMap[name];
 
   // TODO: replace with call to exception handler
-  if (!variable_val) {
+  if (!varValue) {
     cout << "Variable not defined: " << name << "\n";
     return nullptr;
   }
 
-  return variable_val;
+  return varValue;
 }
 
 Value *LlvmCodegen::callCodegen() { return 0; }
@@ -46,11 +50,7 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
   auto prev_context = std::move(this->context);
   auto prev_module = std::move(this->module);
 
-  this->context = make_unique<LLVMContext>();
-  this->module = make_unique<Module>(Constants::moduleName, *this->context);
-  this->module->setDataLayout(this->dataLayout);
-  this->builder = make_unique<IRBuilder<>>(*this->context);
-
+  this->initializeContextAndModule();
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 

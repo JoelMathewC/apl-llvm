@@ -7,14 +7,14 @@ This is a JIT compiler for the APL programming language built using LLVM.
 ```bash
 # the -DLLVM_DIR param needs to point to the LLVM install path on your machine
 cmake -B build -DLLVM_DIR=/usr/local/Cellar/llvm/21.1.7/
-cmake --build build/ --config Release
+cmake --build build/ --config Release --target apl-repl
 ```
 
 ### Debugging
 ```bash
 # the -DLLVM_DIR param needs to point to the LLVM install path on your machine
 cmake -B build -DLLVM_DIR=/usr/local/Cellar/llvm/21.1.7/
-cmake --build build/ --config Debug
+cmake --build build/ --config Debug --target apl-repl
 ```
 
 Add a `CMakePresets.json` file in the root directory

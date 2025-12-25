@@ -16,15 +16,18 @@ class LlvmCodegen {
   DataLayout dataLayout;
   map<string, Value *> variableMap;
 
+  void initializeContextAndModule();
+
 public:
   LlvmCodegen(llvm::DataLayout dataLayout);
   ~LlvmCodegen();
 
-  Value *literalCodegen(const vector<float> vec);
+  Value *literalCodegen(const float *vecPtr, int size);
   Value *variableCodegen(string name);
   Value *callCodegen();
   Value *assignCodegen();
-  pair<unique_ptr<LLVMContext>,unique_ptr<Module>> getAndReinitializeContextAndModule();
+  pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
+  getAndReinitializeContextAndModule();
   Function *wrapInAnonymousFunction(Value *exprIR);
 };
 } // namespace AplCodegen

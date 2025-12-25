@@ -13,6 +13,7 @@ When in doubt refer to the Google [C++ Style Guide](https://google.github.io/sty
 
 ### Naming
 1. All generated files are suffixed with `.g.cpp` / `.g.hpp`
+2. All private/protected methods should be suffixed with a `_`.
 
 ### Formatting
 This project uses `clang-format` as the formatter for the project. This tool can be downloaded as a VSCode extension for formatting on save.
@@ -21,6 +22,3 @@ This project uses `clang-format` as the formatter for the project. This tool can
 1. All comments in this project us C++ style `//`. Multi-line comments have the slashes repeated on each line.
 2. All header files must include a file comment at the start to indicate the purpose of the file.
 3. When sufficiently separated (e.g., .h and .cc files), comments describing the use of the class should go together with its interface definition; comments about the class operation and implementation should accompany the implementation of the class's methods. (taken directly from the google style guide)
-
-### Regions
-1. Namespaces that define multiple classes should use `#pragma region` to seperate implementations in the `.cpp` file.

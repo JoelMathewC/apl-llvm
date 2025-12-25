@@ -17,7 +17,8 @@
 */
 %option c++ noyywrap yyclass="AplLexer"
 
-OPERATOR [+\-x*÷]
+MONADIC_OP [+]
+DYADIC_OP [+\-x*÷]
 
 %%
 [ \t]+
@@ -30,7 +31,8 @@ OPERATOR [+\-x*÷]
 "←" {return token::LEFT_ARROW;}
 "⋄" {return token::DIAMOND;}
 
-{OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
+{MONADIC_OP}          {yylval->emplace<char>(*yytext); return token::MONADIC_OP;}
+{DYADIC_OP}          {yylval->emplace<char>(*yytext); return token::DYADIC_OP;}
 [_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}
 

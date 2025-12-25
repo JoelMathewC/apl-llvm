@@ -87,8 +87,9 @@ void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
   auto Sym = this->session
                  ->lookup({&this->mainJD}, mangle(Constants::anonymousExprName))
                  .get();
-  auto *fp = Sym.toPtr<float (*)()>();
-  cout << "Evaluated to: " << fp() << "\n";
+  auto *fp = Sym.toPtr<float *(*)()>();
+  cout << "Evaluated to: " << *fp() << " " << *(fp() + 1) << " " << *(fp() + 2)
+       << "\n";
   rt->remove();
 }
 } // namespace AplCompiler

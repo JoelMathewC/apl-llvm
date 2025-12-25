@@ -30,11 +30,31 @@ unique_ptr<AplOp::Op> createOp(char op) {
 
 // Term section
 Term::~Term() = default;
+
 const string Term::print() const { return "TERM"; }
-llvm::Value *Term::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+
+llvm::Value *Term::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+  return nullptr;
+}
+
+llvm::Function *Term::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 // End Term section
+
+// Node section
+llvm::Function *Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+  return codegenManager->wrapInAnonymousFunction(
+      this->codegen_(codegenManager));
+}
+// End Node Section
+
+// Tree section
+llvm::Function *Tree::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+  this->codegen_(codegenManager);
+  return nullptr;
+}
+// End Tree section
 
 // Literal section
 Literal::Literal(const vector<float> val) : val(val) {}
@@ -51,8 +71,8 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 
 const vector<float> &Literal::getVal() const { return this->val; }
 
-llvm::Value *Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->literalCodegen(this->val);
+llvm::Value *Literal::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+  return codegenManager->literalCodegen(this->val.data(), this->val.size());
 }
 
 const string Literal::print() const {
@@ -79,7 +99,7 @@ unique_ptr<Variable> Variable::create(const string &name) {
 
 const string &Variable::getName() const { return name; }
 
-llvm::Value *Variable::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *Variable::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->variableCodegen(this->name);
 }
 
@@ -108,7 +128,7 @@ const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
 
 const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; }
 
-llvm::Value *Call::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *Call::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 
@@ -138,7 +158,7 @@ const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
 
 const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 
-llvm::Value *AssignStmt::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *AssignStmt::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 
