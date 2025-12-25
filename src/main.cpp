@@ -36,7 +36,6 @@ int main() {
       make_unique<AplCodegen::LlvmCodegen>(jit->getDataLayout());
 
   while (true) {
-
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get());

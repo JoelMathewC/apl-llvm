@@ -1,4 +1,5 @@
 #include "compiler.hpp"
+#include "../constants.hpp"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
@@ -83,8 +84,9 @@ void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
   auto rt = this->mainJD.getDefaultResourceTracker();
   auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
   this->compileLayer.add(rt, std::move(tsm));
-  auto Sym =
-      this->session->lookup({&this->mainJD}, mangle("__anon_expr")).get();
+  auto Sym = this->session
+                 ->lookup({&this->mainJD}, mangle(Constants::anonymousExprName))
+                 .get();
   auto *fp = Sym.toPtr<float (*)()>();
   cout << "Evaluated to: " << fp() << "\n";
   rt->remove();
