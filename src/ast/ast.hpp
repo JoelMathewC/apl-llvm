@@ -28,7 +28,12 @@ public:
 
 // Abstract class for nodes in APL AST that evaluate to expressions
 class Node : public Term {
+protected:
+  const vector<unsigned long> shape;
+  Node(const vector<unsigned long> shape);
+
 public:
+  const vector<unsigned long> getShape();
   llvm::Function *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
 };
 

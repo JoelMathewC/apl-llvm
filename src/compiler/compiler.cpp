@@ -80,7 +80,8 @@ const DataLayout &JITCompiler::getDataLayout() const {
 JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 
 void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
-                                    unique_ptr<Module> module) {
+                                    unique_ptr<Module> module,
+                                    vector<unsigned long> resultShape) {
   auto rt = this->mainJD.getDefaultResourceTracker();
   auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
   this->compileLayer.add(rt, std::move(tsm));
@@ -88,8 +89,14 @@ void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
                  ->lookup({&this->mainJD}, mangle(Constants::anonymousExprName))
                  .get();
   auto *fp = Sym.toPtr<float *(*)()>();
-  cout << "Evaluated to: " << *fp() << " " << *(fp() + 1) << " " << *(fp() + 2)
-       << "\n";
+  auto *res = fp();
+
+  // TODO: make this work for dimensions larger than 1.
+  for (int i = 0; i < resultShape[0]; ++i) {
+    cout << *(res + i) << " ";
+  }
+  cout << "\n";
+
   rt->remove();
 }
 } // namespace AplCompiler

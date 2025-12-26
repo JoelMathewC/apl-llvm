@@ -22,13 +22,15 @@
 
 // Configure the parser to accept the lexer and ast return ptr as an argument.
 %parse-param {AplLexer &lexer}
-%parse-param {std::unique_ptr<AplAst::Term>& ast_ret_ptr}
+// TODO: set this back to term
+%parse-param {std::unique_ptr<AplAst::Node>& ast_ret_ptr}
 
 // Using a union here prevents us from using smart pointers
 // https://www.gnu.org/software/bison/manual/html_node/C_002b_002b-Unions.html
 %define api.value.type variant
 
-%type <std::unique_ptr<AplAst::Term>> start prgm
+// TODO: set this back to term
+%type <std::unique_ptr<AplAst::Node>> start prgm
 %type <std::unique_ptr<AplAst::Node>> op_expr
 %type <std::unique_ptr<AplAst::Literal>> array
 %type <std::unique_ptr<AplAst::AssignStmt>> assign_stmt
@@ -46,9 +48,9 @@ start: prgm INPUT_COMPLETED {ast_ret_ptr = std::move($1); YYACCEPT;}
 
 prgm: prgm DIAMOND prgm {}
     | op_expr           {$$ = std::move($1);} 
-    | assign_stmt       {$$ = std::move($1);}
+    | assign_stmt       {}
 
-assign_stmt: VARIABLE LEFT_ARROW op_expr    {$$ = AplAst::AssignStmt::create($1,$3);}
+assign_stmt: VARIABLE LEFT_ARROW op_expr    {}
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
     | MONADIC_OP op_expr          {}    

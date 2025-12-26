@@ -37,6 +37,8 @@ public:
   static unique_ptr<JITCompiler> create();
   const DataLayout &getDataLayout() const;
   JITDylib &getMainJITDylib();
-  void compileAndExecute(unique_ptr<LLVMContext> context, unique_ptr<Module> module);
+  void compileAndExecute(unique_ptr<LLVMContext> context,
+                         unique_ptr<Module> module,
+                         vector<unsigned long> resultShape);
 };
 } // namespace AplCompiler

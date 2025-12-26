@@ -43,6 +43,10 @@ llvm::Function *Term::codegen(AplCodegen::LlvmCodegen *codegenManager) {
 // End Term section
 
 // Node section
+const vector<unsigned long> Node::getShape() { return this->shape; }
+
+Node::Node(const vector<unsigned long> shape) : shape(shape) {}
+
 llvm::Function *Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->wrapInAnonymousFunction(
       this->codegen_(codegenManager));
@@ -57,7 +61,8 @@ llvm::Function *Tree::codegen(AplCodegen::LlvmCodegen *codegenManager) {
 // End Tree section
 
 // Literal section
-Literal::Literal(const vector<float> val) : val(val) {}
+Literal::Literal(const vector<float> val)
+    : val(val), Node(vector<unsigned long>{val.size()}) {}
 
 unique_ptr<Literal> Literal::create(float val) {
   vector<float> vec = {val};
@@ -91,7 +96,8 @@ const string Literal::print() const {
 // end Literal section
 
 // Variable section
-Variable::Variable(const string &name) : name(name) {}
+Variable::Variable(const string &name)
+    : name(name), Node(vector<unsigned long>{0}) {}
 
 unique_ptr<Variable> Variable::create(const string &name) {
   return make_unique<Variable>(name);
@@ -107,8 +113,10 @@ const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
 // end Variable section
 
 // Call section
+// TODO: remove the redundant createOp here and fix the result shape logic
 Call::Call(char op, vector<unique_ptr<Node>> &args)
-    : op(createOp(op)), args(std::move(args)) {}
+    : op(createOp(op)), args(std::move(args)),
+      Node(createOp(op)->getResultShape(vector<vector<unsigned long>>{args[0]->getShape()})) {}
 
 unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;

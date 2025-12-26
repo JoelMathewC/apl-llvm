@@ -23,7 +23,7 @@ int main() {
   cout << "\033[32m=== APL 1.0 REPL ===\033[0m\n";
   cout << "Type \"quit()\" to exit this program\n";
   AplLexer lexer;
-  std::unique_ptr<AplAst::Term> ast_ret_ptr;
+  std::unique_ptr<AplAst::Node> ast_ret_ptr;
   yy::parser parser(lexer, ast_ret_ptr);
 
   unique_ptr<AplCompiler::JITCompiler> jit = AplCompiler::JITCompiler::create();
@@ -42,7 +42,8 @@ int main() {
     llvmIr->print(errs());
     auto [context, module] =
         codegenManager->getAndReinitializeContextAndModule();
-    jit->compileAndExecute(std::move(context), std::move(module));
+    jit->compileAndExecute(std::move(context), std::move(module),
+                           ast_ret_ptr->getShape());
   }
 
   return 0;
