@@ -15,6 +15,7 @@ class LlvmCodegen {
   unique_ptr<IRBuilder<>> builder;
   DataLayout dataLayout;
   map<string, Value *> variableMap;
+  Function *F;
 
   void initializeContextAndModule();
 
@@ -22,7 +23,7 @@ public:
   LlvmCodegen(llvm::DataLayout dataLayout);
   ~LlvmCodegen();
 
-  Value *literalCodegen(const float *vecPtr, int size);
+  Value *literalCodegen(const vector<float> vec);
   Value *variableCodegen(string name);
   Value *callCodegen();
   Value *assignCodegen();

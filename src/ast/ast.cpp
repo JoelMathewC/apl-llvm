@@ -77,7 +77,7 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 const vector<float> &Literal::getVal() const { return this->val; }
 
 llvm::Value *Literal::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->literalCodegen(this->val.data(), this->val.size());
+  return codegenManager->literalCodegen(this->val);
 }
 
 const string Literal::print() const {
@@ -116,7 +116,8 @@ const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
 // TODO: remove the redundant createOp here and fix the result shape logic
 Call::Call(char op, vector<unique_ptr<Node>> &args)
     : op(createOp(op)), args(std::move(args)),
-      Node(createOp(op)->getResultShape(vector<vector<unsigned long>>{args[0]->getShape()})) {}
+      Node(createOp(op)->getResultShape(
+          vector<vector<unsigned long>>{args[0]->getShape()})) {}
 
 unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg) {
   vector<unique_ptr<Node>> vec;

@@ -39,9 +39,10 @@ int main() {
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get());
-    llvmIr->print(errs());
     auto [context, module] =
         codegenManager->getAndReinitializeContextAndModule();
+
+    module->print(errs(), nullptr);
     jit->compileAndExecute(std::move(context), std::move(module),
                            ast_ret_ptr->getShape());
   }
