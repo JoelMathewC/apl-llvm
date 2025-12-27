@@ -11,24 +11,6 @@
 using namespace std;
 
 namespace AplAst {
-// LocalFunctions section
-unique_ptr<AplOp::DyadicOp> createDyadicOp(char op) {
-  // TODO: add support for ÷
-  switch (op) {
-  case '+':
-    return make_unique<AplOp::AddOp>();
-  case '-':
-    return make_unique<AplOp::SubOp>();
-  case 'x':
-    return make_unique<AplOp::MulOp>();
-  case '*':
-    return make_unique<AplOp::ExpOp>();
-  default:
-    return make_unique<AplOp::DyadicOp>();
-  }
-}
-// End LocalFunctions section
-
 // Node section
 Node::Node(const vector<unsigned long> shape) : shape(shape) {}
 
@@ -86,7 +68,7 @@ DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
 
 unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
                                           unique_ptr<Node> &arg2) {
-  auto dyadicOp = createDyadicOp(op);
+  auto dyadicOp = AplOp::createDyadicOp(op);
   if (!dyadicOp->isOperandShapeCorrect(arg1->getShape(), arg2->getShape())) {
     throw std::invalid_argument("Syntax Error: mismatched argument shapes!");
   }

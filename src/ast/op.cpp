@@ -73,4 +73,20 @@ Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
                       Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
+
+unique_ptr<AplOp::DyadicOp> createDyadicOp(char op) {
+  // TODO: add support for ÷
+  switch (op) {
+  case '+':
+    return make_unique<AplOp::AddOp>();
+  case '-':
+    return make_unique<AplOp::SubOp>();
+  case 'x':
+    return make_unique<AplOp::MulOp>();
+  case '*':
+    return make_unique<AplOp::ExpOp>();
+  default:
+    throw std::logic_error("Operation " + string(1, op) + " is unimplemented!");
+  }
+}
 } // namespace AplOp
