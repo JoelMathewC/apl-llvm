@@ -31,43 +31,46 @@ const vector<unsigned long> ShapeRetainingDyadicOp::getResultShape(
 
 const string Op::print() const { return "unspecified-op"; }
 
-Value *DyadicOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                          Value *rhs) {
+Value *DyadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                         Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
 
 const string AddOp::print() const { return "+"; }
 
-Value *AddOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                       Value *rhs) {
-  return codegenManager->addCodegen(lhs, rhs);
+Value *AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                      Value *rhs, vector<unsigned long> resultShape) {
+  unsigned long numElem = 1;
+  for (auto idx : resultShape)
+    numElem *= idx;
+  return codegenManager->addCodegen(lhs, rhs, numElem);
 }
 
 const string SubOp::print() const { return "-"; }
 
-Value *SubOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                       Value *rhs) {
+Value *SubOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                      Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
 
 const string MulOp::print() const { return "x"; }
 
-Value *MulOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                       Value *rhs) {
+Value *MulOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                      Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
 
 const string ExpOp::print() const { return "*"; }
 
-Value *ExpOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                       Value *rhs) {
+Value *ExpOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                      Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
 
 const string DivOp::print() const { return "÷"; }
 
-Value *DivOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                       Value *rhs) {
+Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                      Value *rhs, vector<unsigned long> resultShape) {
   return nullptr;
 }
 } // namespace AplOp

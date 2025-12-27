@@ -21,8 +21,8 @@ public:
   virtual const vector<unsigned long>
   getResultShape(vector<unsigned long> firstOperandShape,
                  vector<unsigned long> secondOperandShape) const;
-  virtual Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                          Value *rhs);
+  virtual Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                         Value *rhs, vector<unsigned long> resultShape);
 };
 
 class ShapeRetainingDyadicOp : public DyadicOp {
@@ -37,36 +37,36 @@ public:
 
 class AddOp : public ShapeRetainingDyadicOp {
 public:
-  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                  Value *rhs) override;
+  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                 Value *rhs, vector<unsigned long> resultShape) override;
   const string print() const override;
 };
 
 class SubOp : public ShapeRetainingDyadicOp {
 public:
-  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                  Value *rhs) override;
+  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                 Value *rhs, vector<unsigned long> resultShape) override;
   const string print() const override;
 };
 
 class MulOp : public ShapeRetainingDyadicOp {
 public:
-  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                  Value *rhs) override;
+  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                 Value *rhs, vector<unsigned long> resultShape) override;
   const string print() const override;
 };
 
 class DivOp : public ShapeRetainingDyadicOp {
 public:
-  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                  Value *rhs) override;
+  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                 Value *rhs, vector<unsigned long> resultShape) override;
   const string print() const override;
 };
 
 class ExpOp : public ShapeRetainingDyadicOp {
 public:
-  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                  Value *rhs) override;
+  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                 Value *rhs, vector<unsigned long> resultShape) override;
   const string print() const override;
 };
 } // namespace AplOp

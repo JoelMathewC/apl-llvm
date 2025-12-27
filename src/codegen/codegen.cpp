@@ -32,7 +32,6 @@ void LlvmCodegen::initializeContextAndModule() {
   this->builder->SetInsertPoint(BB);
 }
 
-
 LlvmCodegen::~LlvmCodegen() = default;
 
 Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
@@ -59,7 +58,8 @@ Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
   return rawPtr;
 }
 
-Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
+Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2,
+                               unsigned long numElem) {
   Function *func = this->builder->GetInsertBlock()->getParent();
 
   AllocaInst *alloca = this->builder->CreateAlloca(
@@ -88,10 +88,9 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
 
   Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
   this->builder->CreateStore(nextVal, alloca);
-
-  // TODO: remove hardcoded 5
+./bui a
   Value *endCond =
-      builder->CreateICmpULT(nextVal, builder->getInt32(5), "loopcond");
+      builder->CreateICmpULT(nextVal, builder->getInt32(numElem), "loopcond");
 
   BasicBlock *AfterLoopBB =
       BasicBlock::Create(*this->context, "after-loop", func);
@@ -100,8 +99,6 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
 
   return arg1;
 }
-
-Value *LlvmCodegen::callCodegen() { return 0; }
 
 pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
 LlvmCodegen::getAndReinitializeContextAndModule() {

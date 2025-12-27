@@ -95,14 +95,14 @@ unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
 }
 
 llvm::Value *DyadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return this->op->codegen_(codegenManager,
-                            this->arg1->codegen(codegenManager),
-                            this->arg2->codegen(codegenManager));
+  return this->op->codegen(codegenManager, this->arg1->codegen(codegenManager),
+                           this->arg2->codegen(codegenManager),
+                           this->getShape());
 }
 
 const string DyadicCall::print() const {
-  return "DyadicCall(" + this->op->print() + string(1, ',') +
-         this->arg1->print() + string(1, ',') + this->arg2->print() + ")";
+  return "DyadicCall(" + this->op->print() + "," + this->arg1->print() + "," +
+         this->arg2->print() + ")";
 }
 // end DyadicCall section
 
