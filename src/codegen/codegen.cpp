@@ -88,7 +88,6 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2,
 
   Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
   this->builder->CreateStore(nextVal, alloca);
-./bui a
   Value *endCond =
       builder->CreateICmpULT(nextVal, builder->getInt32(numElem), "loopcond");
 
