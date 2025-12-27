@@ -47,7 +47,7 @@ JITCompiler::JITCompiler(unique_ptr<ExecutionSession> session,
 }
 
 JITCompiler::~JITCompiler() {
-  this->rt->remove();
+  Error error = this->rt->remove();
   if (auto Err = this->session->endSession())
     session->reportError(std::move(Err));
 }
@@ -82,12 +82,14 @@ const DataLayout &JITCompiler::getDataLayout() const {
 JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 
 Constants::CompilerFunc
-JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager) {
+JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager,
+                     Value *returnExpr) {
+  codegenManager->returnCodegen(returnExpr);
   auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
-  module->print(errs(), nullptr);
+  // module->print(errs(), nullptr);
 
   auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
-  this->compileLayer.add(this->rt, std::move(tsm));
+  Error error = this->compileLayer.add(this->rt, std::move(tsm));
   auto Sym = this->session
                  ->lookup({&this->mainJD}, mangle(Constants::anonymousExprName))
                  .get();

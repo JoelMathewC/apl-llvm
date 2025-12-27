@@ -19,12 +19,34 @@
 
 using namespace std;
 
+void printResult(float *res, vector<unsigned long> shape) {
+  string shapeStr = "";
+  for (int i = 0; i < shape.size(); ++i) {
+    if (i == 0)
+      shapeStr.append(to_string(shape[i]));
+    else
+      shapeStr.append(to_string(shape[i]) + "x");
+  }
+  cout << "<" << shapeStr << "> [";
+
+  unsigned long totalElem = 1;
+  for (auto idx : shape)
+    totalElem *= idx;
+
+  for (int i = 0; i < totalElem; ++i) {
+    if (i > 0)
+      cout << " ";
+    cout << *(res + i);
+  }
+  cout << "]\n";
+}
+
 int main() {
   cout << "\033[32m=== APL 1.0 REPL ===\033[0m\n";
   cout << "Type \"quit()\" to exit this program\n";
   AplLexer lexer;
-  std::unique_ptr<AplAst::Node> ast_ret_ptr;
-  yy::parser parser(lexer, ast_ret_ptr);
+  std::unique_ptr<AplAst::Node> astRetPtr;
+  yy::parser parser(lexer, astRetPtr);
 
   unique_ptr<AplCompiler::JITCompiler> jit = AplCompiler::JITCompiler::create();
   if (jit == nullptr) {
@@ -38,15 +60,10 @@ int main() {
   while (true) {
     cout << "\033[35m>>>\033[0m ";
     parser();
-    auto llvmIr = ast_ret_ptr->codegen(codegenManager.get(), true);
-    auto compiledFunc = jit->compile(codegenManager.get());
-
-    // TODO: make this work for dimensions larger than 1.
+    auto llvmIr = astRetPtr->codegen(codegenManager.get());
+    auto compiledFunc = jit->compile(codegenManager.get(), llvmIr);
     auto *res = compiledFunc();
-    for (int i = 0; i < ast_ret_ptr->getShape()[0]; ++i) {
-      cout << *(res + i) << " ";
-    }
-    cout << "\n";
+    printResult(res, astRetPtr->getShape());
   }
 
   return 0;

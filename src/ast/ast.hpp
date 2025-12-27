@@ -18,14 +18,12 @@ namespace AplAst {
 // Abstract class for nodes in APL AST that evaluate to expressions
 class Node {
 protected:
-  virtual llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager);
   const vector<unsigned long> shape;
   Node(const vector<unsigned long> shape);
 
 public:
+  virtual llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager);
   const vector<unsigned long> getShape();
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager,
-                       bool isTopLvlExpr);
   virtual const string print() const;
   virtual ~Node();
 };
@@ -33,13 +31,13 @@ public:
 // Literal node in the APL AST
 class Literal : public Node {
   const vector<float> val;
-  llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
 
 public:
   Literal(const vector<float> val);
   static unique_ptr<Literal> create(float val);
   static unique_ptr<Literal> create(vector<float> vec, float new_elem);
   const vector<float> &getVal() const;
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 
@@ -48,13 +46,13 @@ class DyadicCall : public Node {
   const unique_ptr<AplOp::DyadicOp> op;
   const unique_ptr<Node> arg1;
   const unique_ptr<Node> arg2;
-  llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
 
 public:
   DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
              unique_ptr<Node> arg2);
   static unique_ptr<DyadicCall> create(char op, unique_ptr<Node> &arg1,
                                        unique_ptr<Node> &arg2);
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 

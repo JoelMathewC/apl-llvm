@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
 #include "../src/lexer/AplLexer.hpp"
 #include "../src/parser/parser.g.hpp"
+#include <gtest/gtest.h>
 
 TEST(ParserTest, CanParseLiteral) {
   AplLexer lexer;
-  std::unique_ptr<AplAst::Term> ast_ret_ptr;
-  yy::parser parser(lexer, ast_ret_ptr);
+  std::unique_ptr<AplAst::Term> astRetPtr;
+  yy::parser parser(lexer, astRetPtr);
 }

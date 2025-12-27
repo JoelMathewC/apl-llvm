@@ -22,7 +22,7 @@
 
 // Configure the parser to accept the lexer and ast return ptr as an argument.
 %parse-param {AplLexer &lexer}
-%parse-param {std::unique_ptr<AplAst::Node>& ast_ret_ptr}
+%parse-param {std::unique_ptr<AplAst::Node>& astRetPtr}
 
 // Using a union here prevents us from using smart pointers
 // https://www.gnu.org/software/bison/manual/html_node/C_002b_002b-Unions.html
@@ -37,7 +37,7 @@
 %right OPERATOR
 
 %%
-start: prgm INPUT_COMPLETED {ast_ret_ptr = std::move($1); YYACCEPT;}
+start: prgm INPUT_COMPLETED {astRetPtr = std::move($1); YYACCEPT;}
     | INPUT_COMPLETED       {YYACCEPT;}
     | EXIT                  {exit(0);}
 

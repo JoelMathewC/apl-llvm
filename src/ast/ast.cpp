@@ -36,16 +36,8 @@ Node::~Node() = default;
 
 const vector<unsigned long> Node::getShape() { return this->shape; }
 
-llvm::Value *Node::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
-}
-
-llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                           bool isTopLvlExpr) {
-  if (isTopLvlExpr)
-    return codegenManager->wrapInAnonymousFunction(
-        this->codegen_(codegenManager));
-  return this->codegen_(codegenManager);
 }
 
 const string Node::print() const { return "unspecialized-node"; }
@@ -67,7 +59,7 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 
 const vector<float> &Literal::getVal() const { return this->val; }
 
-llvm::Value *Literal::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->literalCodegen(this->val);
 }
 
@@ -102,10 +94,10 @@ unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
                                  std::move(arg2));
 }
 
-llvm::Value *DyadicCall::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *DyadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return this->op->codegen_(codegenManager,
-                            this->arg1->codegen(codegenManager, false),
-                            this->arg2->codegen(codegenManager, false));
+                            this->arg1->codegen(codegenManager),
+                            this->arg2->codegen(codegenManager));
 }
 
 const string DyadicCall::print() const {

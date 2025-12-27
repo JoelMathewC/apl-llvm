@@ -27,6 +27,6 @@ public:
   Value *callCodegen();
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
-  Function *wrapInAnonymousFunction(Value *exprIR);
+  void returnCodegen(Value *returnExpr);
 };
 } // namespace AplCodegen

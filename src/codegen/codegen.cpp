@@ -112,8 +112,7 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 
-Function *LlvmCodegen::wrapInAnonymousFunction(Value *exprIR) {
-  this->builder->CreateRet(exprIR);
-  return this->builder->GetInsertBlock()->getParent();
+void LlvmCodegen::returnCodegen(Value *returnExpr) {
+  this->builder->CreateRet(returnExpr);
 }
 } // namespace AplCodegen
