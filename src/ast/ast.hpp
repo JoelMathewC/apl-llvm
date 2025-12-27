@@ -21,7 +21,7 @@ protected:
   virtual llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager);
 
 public:
-  virtual llvm::Function *codegen(AplCodegen::LlvmCodegen *codegenManager);
+  virtual llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr) ;
   virtual const string print() const;
   virtual ~Term();
 };
@@ -34,13 +34,13 @@ protected:
 
 public:
   const vector<unsigned long> getShape();
-  llvm::Function *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr)  override;
 };
 
 // Abstract class for nodes in APL AST that are standalone statements
 class Tree : public Term {
 public:
-  llvm::Function *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr)  override;
 };
 
 // Literal node in the APL AST

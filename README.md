@@ -97,6 +97,8 @@ Add `.vscode\c_cpp_properties.json` in the root directory
 }
 ```
 
+Then run `CMake: Select Preset`, `Cmake: Configure`, `Debug tab > apl-repl debug`
+
 ### Running Binary
 ```bash
 ./build/apl-repl

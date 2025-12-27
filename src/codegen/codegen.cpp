@@ -19,10 +19,11 @@ void LlvmCodegen::initializeContextAndModule() {
 
   FunctionType *FT = FunctionType::get(this->builder->getPtrTy(),
                                        std::vector<Type *>(), false);
-  this->F = Function::Create(FT, Function::ExternalLinkage,
-                             Constants::anonymousExprName, this->module.get());
-  BasicBlock *BB = BasicBlock::Create(*this->context,
-                                      Constants::basicBlockEntryTag, this->F);
+  Function *F =
+      Function::Create(FT, Function::ExternalLinkage,
+                       Constants::anonymousExprName, this->module.get());
+  BasicBlock *BB =
+      BasicBlock::Create(*this->context, Constants::basicBlockEntryTag, F);
   this->builder->SetInsertPoint(BB);
 }
 
@@ -69,6 +70,47 @@ Value *LlvmCodegen::variableCodegen(string name) {
   return varValue;
 }
 
+Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
+  Function *func = this->builder->GetInsertBlock()->getParent();
+
+  AllocaInst *alloca = this->builder->CreateAlloca(
+      Type::getInt64Ty(*this->context), nullptr, "iterator");
+  builder->CreateStore(builder->getInt64(0), alloca);
+
+  // Add an explicit fall through to the LoopBB block
+  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "loop", func);
+  this->builder->CreateBr(LoopBB);
+  this->builder->SetInsertPoint(LoopBB);
+
+  Value *currVal = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+                                             alloca, "iterator");
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1, {currVal}, "arg1_ptr");
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2, {currVal}, "arg2_ptr");
+
+  Value *arg1Val = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+                                             arg1Ptr, "arg1_val");
+  Value *arg2Val = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+                                             arg2Ptr, "arg2_val");
+  Value *sumVal = this->builder->CreateAdd(arg1Val, arg2Val);
+  this->builder->CreateStore(sumVal, arg1Ptr);
+
+  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt64(1));
+  this->builder->CreateStore(nextVal, alloca);
+
+  Value *endCond =
+      builder->CreateICmpULT(nextVal, builder->getInt64(5), "loopcond");
+
+  BasicBlock *AfterLoopBB =
+      BasicBlock::Create(*this->context, "after-loop", func);
+  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
+  this->builder->SetInsertPoint(AfterLoopBB);
+
+  return arg1;
+}
+
 Value *LlvmCodegen::callCodegen() { return 0; }
 
 Value *LlvmCodegen::assignCodegen() { return 0; }
@@ -84,6 +126,6 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
 
 Function *LlvmCodegen::wrapInAnonymousFunction(Value *exprIR) {
   this->builder->CreateRet(exprIR);
-  return F;
+  return this->builder->GetInsertBlock()->getParent();
 }
 } // namespace AplCodegen

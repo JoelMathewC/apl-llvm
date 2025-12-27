@@ -17,12 +17,16 @@
 */
 %option c++ noyywrap yyclass="AplLexer"
 
-MONADIC_OP [+]
-DYADIC_OP [+\-x*÷]
+/*
+We don't diffrentiate between monadic and dyadic operators here since most
+APL glyphs can serve as monadic and dyadic operators and the lexer cannot distinguish
+without context so we differ the distinction to the parser.
+*/
+OPERATOR [+\-x*÷]
 
 %%
-[ \t]+
-(⍝.*)
+[ \t]+     {}
+(⍝.*)       {}
 
 "\n"        {return token::INPUT_COMPLETED;}
 "quit()"    {return token::EXIT;}
@@ -31,8 +35,7 @@ DYADIC_OP [+\-x*÷]
 "←" {return token::LEFT_ARROW;}
 "⋄" {return token::DIAMOND;}
 
-{MONADIC_OP}          {yylval->emplace<char>(*yytext); return token::MONADIC_OP;}
-{DYADIC_OP}          {yylval->emplace<char>(*yytext); return token::DYADIC_OP;}
+{OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
 [_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}
 

@@ -37,7 +37,8 @@ llvm::Value *Term::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
   return nullptr;
 }
 
-llvm::Function *Term::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+llvm::Value *Term::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                           bool isTopLvlExpr) {
   return nullptr;
 }
 // End Term section
@@ -47,16 +48,19 @@ const vector<unsigned long> Node::getShape() { return this->shape; }
 
 Node::Node(const vector<unsigned long> shape) : shape(shape) {}
 
-llvm::Function *Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->wrapInAnonymousFunction(
-      this->codegen_(codegenManager));
+llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                           bool isTopLvlExpr) {
+  if (isTopLvlExpr)
+    return codegenManager->wrapInAnonymousFunction(
+        this->codegen_(codegenManager));
+  return this->codegen_(codegenManager);
 }
 // End Node Section
 
 // Tree section
-llvm::Function *Tree::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  this->codegen_(codegenManager);
-  return nullptr;
+llvm::Value *Tree::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                           bool isTopLvlExpr) {
+  return this->codegen_(codegenManager);
 }
 // End Tree section
 
@@ -138,7 +142,9 @@ const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
 const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; }
 
 llvm::Value *Call::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return nullptr;
+  return codegenManager->addCodegen(
+      this->args[0]->codegen(codegenManager, false),
+      this->args[1]->codegen(codegenManager, false));
 }
 
 const string Call::print() const {

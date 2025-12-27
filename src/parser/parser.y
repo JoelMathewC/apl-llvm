@@ -37,9 +37,9 @@
 
 %token <float> LITERAL
 %token <std::string> VARIABLE
-%token <char> INPUT_COMPLETED EXIT LEFT_ARROW DIAMOND MONADIC_OP DYADIC_OP
+%token <char> INPUT_COMPLETED EXIT LEFT_ARROW DIAMOND OPERATOR
 
-%right DIAMOND MONADIC_OP DYADIC_OP
+%right DIAMOND OPERATOR
 
 %%
 start: prgm INPUT_COMPLETED {ast_ret_ptr = std::move($1); YYACCEPT;}
@@ -53,8 +53,8 @@ prgm: prgm DIAMOND prgm {}
 assign_stmt: VARIABLE LEFT_ARROW op_expr    {}
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
-    | MONADIC_OP op_expr          {}    
-    | op_expr DYADIC_OP op_expr  {$$ = AplAst::Call::create($2, $1, $3);}    
+    | OPERATOR op_expr          {}    
+    | op_expr OPERATOR op_expr  {$$ = AplAst::Call::create($2, $1, $3);}    
     | array                     {$$ = std::move($1);}   
     | VARIABLE                  {$$ = AplAst::Variable::create($1);}
 
