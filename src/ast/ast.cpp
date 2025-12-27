@@ -2,6 +2,7 @@
 #include "op.hpp"
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 #include "../codegen/codegen.hpp"
@@ -93,7 +94,11 @@ DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
 
 unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
                                           unique_ptr<Node> &arg2) {
-  return make_unique<DyadicCall>(createDyadicOp(op), std::move(arg1),
+  auto dyadicOp = createDyadicOp(op);
+  if (!dyadicOp->isOperandShapeCorrect(arg1->getShape(), arg2->getShape())) {
+    throw std::invalid_argument("Syntax Error: mismatched argument shapes!");
+  }
+  return make_unique<DyadicCall>(std::move(dyadicOp), std::move(arg1),
                                  std::move(arg2));
 }
 
