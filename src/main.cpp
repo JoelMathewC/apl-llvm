@@ -42,7 +42,7 @@ int main() {
     auto [context, module] =
         codegenManager->getAndReinitializeContextAndModule();
 
-    module->print(errs(), nullptr);
+    // module->print(errs(), nullptr);
     jit->compileAndExecute(std::move(context), std::move(module),
                            ast_ret_ptr->getShape());
   }

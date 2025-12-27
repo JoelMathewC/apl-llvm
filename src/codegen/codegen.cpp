@@ -36,11 +36,11 @@ LlvmCodegen::~LlvmCodegen() = default;
 
 Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
   FunctionCallee mallocFunc = this->module->getOrInsertFunction(
-      "malloc", this->builder->getPtrTy(), Type::getInt64Ty(*this->context));
+      "malloc", this->builder->getPtrTy(), Type::getInt32Ty(*this->context));
 
   uint64_t elementSize =
       this->module->getDataLayout().getTypeAllocSize(this->builder->getPtrTy());
-  Value *totalSize = ConstantInt::get(Type::getInt64Ty(*this->context),
+  Value *totalSize = ConstantInt::get(Type::getInt32Ty(*this->context),
                                       vec.size() * elementSize);
   Value *rawPtr =
       this->builder->CreateCall(mallocFunc, totalSize, "heap_array");
@@ -53,8 +53,8 @@ Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
       *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init,
       "src_data");
 
-  this->builder->CreateMemCpy(rawPtr, MaybeAlign(4), sourceGlobal,
-                              MaybeAlign(4), totalSize);
+  this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
+                              MaybeAlign(0), totalSize);
   return rawPtr;
 }
 
@@ -74,15 +74,15 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
   Function *func = this->builder->GetInsertBlock()->getParent();
 
   AllocaInst *alloca = this->builder->CreateAlloca(
-      Type::getInt64Ty(*this->context), nullptr, "iterator");
-  builder->CreateStore(builder->getInt64(0), alloca);
+      Type::getInt32Ty(*this->context), nullptr, "iterator");
+  builder->CreateStore(builder->getInt32(0), alloca);
 
   // Add an explicit fall through to the LoopBB block
   BasicBlock *LoopBB = BasicBlock::Create(*this->context, "loop", func);
   this->builder->CreateBr(LoopBB);
   this->builder->SetInsertPoint(LoopBB);
 
-  Value *currVal = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+  Value *currVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
                                              alloca, "iterator");
 
   Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
@@ -90,18 +90,18 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
   Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
                                             arg2, {currVal}, "arg2_ptr");
 
-  Value *arg1Val = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+  Value *arg1Val = this->builder->CreateLoad(Type::getFloatTy(*this->context),
                                              arg1Ptr, "arg1_val");
-  Value *arg2Val = this->builder->CreateLoad(Type::getInt64Ty(*this->context),
+  Value *arg2Val = this->builder->CreateLoad(Type::getFloatTy(*this->context),
                                              arg2Ptr, "arg2_val");
-  Value *sumVal = this->builder->CreateAdd(arg1Val, arg2Val);
+  Value *sumVal = this->builder->CreateFAdd(arg1Val, arg2Val);
   this->builder->CreateStore(sumVal, arg1Ptr);
 
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt64(1));
+  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
   this->builder->CreateStore(nextVal, alloca);
 
   Value *endCond =
-      builder->CreateICmpULT(nextVal, builder->getInt64(5), "loopcond");
+      builder->CreateICmpULT(nextVal, builder->getInt32(5), "loopcond");
 
   BasicBlock *AfterLoopBB =
       BasicBlock::Create(*this->context, "after-loop", func);
