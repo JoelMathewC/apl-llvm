@@ -32,7 +32,6 @@
 %type <std::unique_ptr<AplAst::Literal>> array
 
 %token <float> LITERAL
-%token <std::string> VARIABLE
 %token <char> INPUT_COMPLETED EXIT OPERATOR
 
 %right OPERATOR
@@ -46,9 +45,8 @@ prgm: op_expr           {$$ = std::move($1);}
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
     | OPERATOR op_expr          {}    
-    | op_expr OPERATOR op_expr  {$$ = AplAst::Call::create($2, $1, $3);}    
-    | array                     {$$ = std::move($1);}   
-    | VARIABLE                  {$$ = AplAst::Variable::create($1);}
+    | op_expr OPERATOR op_expr  {$$ = AplAst::DyadicCall::create($2, $1, $3);}    
+    | array                     {$$ = std::move($1);}
 
 array: array LITERAL    {$$ = AplAst::Literal::create($1->getVal(),$2);}
     | LITERAL           {$$ = AplAst::Literal::create($1);}

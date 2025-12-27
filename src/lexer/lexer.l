@@ -33,7 +33,6 @@ OPERATOR [+\-x*÷]
 [()]	    {return *yytext;}
 
 {OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
-[_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}
 
 .   {printf("unknown character: %c", *yytext); return *yytext;}

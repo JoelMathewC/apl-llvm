@@ -5,25 +5,69 @@
 using namespace std;
 
 namespace AplOp {
-const string Op::print() const { return "unspecified-op"; }
-const vector<unsigned long>
-Op::getResultShape(vector<vector<unsigned long>> argShape) const {
-  return vector<unsigned long>{};
+bool DyadicOp::isOperandShapeCorrect(
+    vector<unsigned long> firstOperandShape,
+    vector<unsigned long> secondOperandShape) const {
+  return false;
 }
 
-// TODO: add logic to actually test if both params have the same shape
 const vector<unsigned long>
-ShapeRetainingOp::getResultShape(vector<vector<unsigned long>> argShape) const {
-  vector<unsigned long> res;
-  for (int i = 0; i < argShape[0].size(); ++i) {
-    res.push_back(argShape[0][i]);
-  }
-  return res;
+DyadicOp::getResultShape(vector<unsigned long> firstOperandShape,
+                         vector<unsigned long> secondOperandShape) const {
+  return {};
+}
+
+bool ShapeRetainingDyadicOp::isOperandShapeCorrect(
+    vector<unsigned long> firstOperandShape,
+    vector<unsigned long> secondOperandShape) const {
+  return firstOperandShape == secondOperandShape;
+}
+
+const vector<unsigned long> ShapeRetainingDyadicOp::getResultShape(
+    vector<unsigned long> firstOperandShape,
+    vector<unsigned long> secondOperandShape) const {
+  return firstOperandShape;
+}
+
+const string Op::print() const { return "unspecified-op"; }
+
+Value *DyadicOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                          Value *rhs) {
+  return nullptr;
 }
 
 const string AddOp::print() const { return "+"; }
+
+Value *AddOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                       Value *rhs) {
+  return codegenManager->addCodegen(lhs, rhs);
+}
+
 const string SubOp::print() const { return "-"; }
+
+Value *SubOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                       Value *rhs) {
+  return nullptr;
+}
+
 const string MulOp::print() const { return "x"; }
+
+Value *MulOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                       Value *rhs) {
+  return nullptr;
+}
+
 const string ExpOp::print() const { return "*"; }
+
+Value *ExpOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                       Value *rhs) {
+  return nullptr;
+}
+
 const string DivOp::print() const { return "÷"; }
+
+Value *DivOp::codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                       Value *rhs) {
+  return nullptr;
+}
 } // namespace AplOp

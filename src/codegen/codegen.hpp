@@ -23,7 +23,6 @@ public:
   ~LlvmCodegen();
 
   Value *literalCodegen(const vector<float> vec);
-  Value *variableCodegen(string name);
   Value *addCodegen(Value *arg1, Value *arg2);
   Value *callCodegen();
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>

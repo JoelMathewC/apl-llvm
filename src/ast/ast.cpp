@@ -11,7 +11,7 @@ using namespace std;
 
 namespace AplAst {
 // LocalFunctions section
-unique_ptr<AplOp::Op> createOp(char op) {
+unique_ptr<AplOp::DyadicOp> createDyadicOp(char op) {
   // TODO: add support for ÷
   switch (op) {
   case '+':
@@ -23,7 +23,7 @@ unique_ptr<AplOp::Op> createOp(char op) {
   case '*':
     return make_unique<AplOp::ExpOp>();
   default:
-    return make_unique<AplOp::Op>();
+    return make_unique<AplOp::DyadicOp>();
   }
 }
 // End LocalFunctions section
@@ -85,66 +85,29 @@ const string Literal::print() const {
 }
 // end Literal section
 
-// Variable section
-Variable::Variable(const string &name)
-    : name(name), Node(vector<unsigned long>{0}) {}
+// DyadicCall section
+DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
+                       unique_ptr<Node> arg2)
+    : Node(op->getResultShape(arg1->getShape(), arg2->getShape())),
+      op(std::move(op)), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
-unique_ptr<Variable> Variable::create(const string &name) {
-  return make_unique<Variable>(name);
+unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
+                                          unique_ptr<Node> &arg2) {
+  return make_unique<DyadicCall>(createDyadicOp(op), std::move(arg1),
+                                 std::move(arg2));
 }
 
-const string &Variable::getName() const { return name; }
-
-llvm::Value *Variable::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->variableCodegen(this->name);
+llvm::Value *DyadicCall::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+  return this->op->codegen_(codegenManager,
+                            this->arg1->codegen(codegenManager, false),
+                            this->arg2->codegen(codegenManager, false));
 }
 
-const string Variable::print() const { return "VARIABLE(" + this->name + ")"; }
-// end Variable section
-
-// Call section
-// TODO: remove the redundant createOp here and fix the result shape logic
-Call::Call(char op, vector<unique_ptr<Node>> &args)
-    : op(createOp(op)), args(std::move(args)),
-      Node(createOp(op)->getResultShape(
-          vector<vector<unsigned long>>{args[0]->getShape()})) {}
-
-unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg) {
-  vector<unique_ptr<Node>> vec;
-  vec.push_back(std::move(arg));
-  return make_unique<Call>(op, vec);
+const string DyadicCall::print() const {
+  return "DyadicCall(" + this->op->print() + string(1, ',') +
+         this->arg1->print() + string(1, ',') + this->arg2->print() + ")";
 }
-
-unique_ptr<Call> Call::create(char op, unique_ptr<Node> &arg1,
-                              unique_ptr<Node> &arg2) {
-  vector<unique_ptr<Node>> vec;
-  vec.push_back(std::move(arg1));
-  vec.push_back(std::move(arg2));
-  return make_unique<Call>(op, vec);
-}
-
-const unique_ptr<AplOp::Op> &Call::getOp() const { return this->op; }
-
-const vector<unique_ptr<Node>> &Call::getArgs() const { return this->args; }
-
-llvm::Value *Call::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->addCodegen(
-      this->args[0]->codegen(codegenManager, false),
-      this->args[1]->codegen(codegenManager, false));
-}
-
-const string Call::print() const {
-  // generate comma seperated string for arguments
-  string args_str = "";
-  for (auto &arg : this->args) {
-    if (args_str.size() > 0)
-      args_str += ',';
-    args_str += arg->print();
-  }
-
-  return "Call(" + this->op->print() + string(1, ',') + args_str + ")";
-}
-// end Call section
+// end DyadicCall section
 
 // Misc. section
 ostream &operator<<(ostream &os, const Node &node) {

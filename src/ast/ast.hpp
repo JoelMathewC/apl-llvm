@@ -43,31 +43,18 @@ public:
   const string print() const override;
 };
 
-// Variable node in the APL AST
-class Variable : public Node {
-  const string name;
+// An APL AST expression node that evaluates dyadic ops on args
+class DyadicCall : public Node {
+  const unique_ptr<AplOp::DyadicOp> op;
+  const unique_ptr<Node> arg1;
+  const unique_ptr<Node> arg2;
   llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
 
 public:
-  Variable(const string &name);
-  static unique_ptr<Variable> create(const string &name);
-  const string &getName() const;
-  const string print() const override;
-};
-
-// An APL AST expression node that evaluates op on args
-class Call : public Node {
-  const unique_ptr<AplOp::Op> op;
-  const vector<unique_ptr<Node>> args;
-  llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
-
-public:
-  Call(char op, vector<unique_ptr<Node>> &args);
-  static unique_ptr<Call> create(char op, unique_ptr<Node> &arg);
-  static unique_ptr<Call> create(char op, unique_ptr<Node> &arg1,
-                                 unique_ptr<Node> &arg2);
-  const unique_ptr<AplOp::Op> &getOp() const;
-  const vector<unique_ptr<Node>> &getArgs() const;
+  DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
+             unique_ptr<Node> arg2);
+  static unique_ptr<DyadicCall> create(char op, unique_ptr<Node> &arg1,
+                                       unique_ptr<Node> &arg2);
   const string print() const override;
 };
 

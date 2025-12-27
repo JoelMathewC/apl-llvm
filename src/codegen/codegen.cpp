@@ -11,6 +11,11 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
+LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
+  this->dataLayout = dataLayout;
+  this->initializeContextAndModule();
+}
+
 void LlvmCodegen::initializeContextAndModule() {
   this->context = make_unique<LLVMContext>();
   this->module = make_unique<Module>(Constants::moduleName, *this->context);
@@ -27,10 +32,6 @@ void LlvmCodegen::initializeContextAndModule() {
   this->builder->SetInsertPoint(BB);
 }
 
-LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
-  this->dataLayout = dataLayout;
-  this->initializeContextAndModule();
-}
 
 LlvmCodegen::~LlvmCodegen() = default;
 
@@ -56,18 +57,6 @@ Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
   this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
                               MaybeAlign(0), totalSize);
   return rawPtr;
-}
-
-Value *LlvmCodegen::variableCodegen(string name) {
-  Value *varValue = this->variableMap[name];
-
-  // TODO: replace with call to exception handler
-  if (!varValue) {
-    cout << "Variable not defined: " << name << "\n";
-    return nullptr;
-  }
-
-  return varValue;
 }
 
 Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {

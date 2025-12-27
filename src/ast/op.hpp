@@ -1,45 +1,72 @@
 #pragma once
 
+#include "../codegen/codegen.hpp"
+#include "llvm/IR/IRBuilder.h"
 #include <string>
-using namespace std;
 
-// TODO: make all the classes here static if need be
+using namespace std;
+using namespace llvm;
+
 namespace AplOp {
 class Op {
 public:
-  virtual const vector<unsigned long>
-  getResultShape(vector<vector<unsigned long>> argShape) const;
   virtual const string print() const;
 };
 
-class ShapeRetainingOp : public Op {
+class DyadicOp : public Op {
 public:
+  virtual bool
+  isOperandShapeCorrect(vector<unsigned long> firstOperandShape,
+                        vector<unsigned long> secondOperandShape) const;
+  virtual const vector<unsigned long>
+  getResultShape(vector<unsigned long> firstOperandShape,
+                 vector<unsigned long> secondOperandShape) const;
+  virtual Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                          Value *rhs);
+};
+
+class ShapeRetainingDyadicOp : public DyadicOp {
+public:
+  bool isOperandShapeCorrect(
+      vector<unsigned long> firstOperandShape,
+      vector<unsigned long> secondOperandShape) const override;
   const vector<unsigned long>
-  getResultShape(vector<vector<unsigned long>> argShape) const override;
+  getResultShape(vector<unsigned long> firstOperandShape,
+                 vector<unsigned long> secondOperandShape) const override;
 };
 
-class AddOp : public ShapeRetainingOp {
+class AddOp : public ShapeRetainingDyadicOp {
 public:
+  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                  Value *rhs) override;
   const string print() const override;
 };
 
-class SubOp : public ShapeRetainingOp {
+class SubOp : public ShapeRetainingDyadicOp {
 public:
+  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                  Value *rhs) override;
   const string print() const override;
 };
 
-class MulOp : public ShapeRetainingOp {
+class MulOp : public ShapeRetainingDyadicOp {
 public:
+  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                  Value *rhs) override;
   const string print() const override;
 };
 
-class DivOp : public ShapeRetainingOp {
+class DivOp : public ShapeRetainingDyadicOp {
 public:
+  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                  Value *rhs) override;
   const string print() const override;
 };
 
-class ExpOp : public ShapeRetainingOp {
+class ExpOp : public ShapeRetainingDyadicOp {
 public:
+  Value *codegen_(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+                  Value *rhs) override;
   const string print() const override;
 };
 } // namespace AplOp
