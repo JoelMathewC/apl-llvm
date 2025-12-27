@@ -39,12 +39,14 @@ int main() {
     cout << "\033[35m>>>\033[0m ";
     parser();
     auto llvmIr = ast_ret_ptr->codegen(codegenManager.get(), true);
-    auto [context, module] =
-        codegenManager->getAndReinitializeContextAndModule();
+    auto compiledFunc = jit->compile(codegenManager.get());
 
-    module->print(errs(), nullptr);
-    jit->compileAndExecute(std::move(context), std::move(module),
-                           ast_ret_ptr->getShape());
+    // TODO: make this work for dimensions larger than 1.
+    auto *res = compiledFunc();
+    for (int i = 0; i < ast_ret_ptr->getShape()[0]; ++i) {
+      cout << *(res + i) << " ";
+    }
+    cout << "\n";
   }
 
   return 0;

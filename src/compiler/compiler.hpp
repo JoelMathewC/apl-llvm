@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../codegen/codegen.hpp"
+#include "../constants.hpp"
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
@@ -27,6 +30,7 @@ private:
   DataLayout dataLayout;
   MangleAndInterner mangle;
   RTDyldObjectLinkingLayer objectLayer;
+  ResourceTrackerSP rt;
   IRCompileLayer compileLayer;
   JITDylib &mainJD;
 
@@ -37,8 +41,6 @@ public:
   static unique_ptr<JITCompiler> create();
   const DataLayout &getDataLayout() const;
   JITDylib &getMainJITDylib();
-  void compileAndExecute(unique_ptr<LLVMContext> context,
-                         unique_ptr<Module> module,
-                         vector<unsigned long> resultShape);
+  Constants::CompilerFunc compile(AplCodegen::LlvmCodegen *codegenManager);
 };
 } // namespace AplCompiler

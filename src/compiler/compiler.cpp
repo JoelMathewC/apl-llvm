@@ -43,9 +43,11 @@ JITCompiler::JITCompiler(unique_ptr<ExecutionSession> session,
     this->objectLayer.setOverrideObjectFlagsWithResponsibilityFlags(true);
     this->objectLayer.setAutoClaimResponsibilityForObjectSymbols(true);
   }
+  this->rt = this->mainJD.getDefaultResourceTracker();
 }
 
 JITCompiler::~JITCompiler() {
+  this->rt->remove();
   if (auto Err = this->session->endSession())
     session->reportError(std::move(Err));
 }
@@ -79,24 +81,17 @@ const DataLayout &JITCompiler::getDataLayout() const {
 
 JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 
-void JITCompiler::compileAndExecute(unique_ptr<LLVMContext> context,
-                                    unique_ptr<Module> module,
-                                    vector<unsigned long> resultShape) {
-  auto rt = this->mainJD.getDefaultResourceTracker();
+Constants::CompilerFunc
+JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager) {
+  auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
+  module->print(errs(), nullptr);
+
   auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
-  this->compileLayer.add(rt, std::move(tsm));
+  this->compileLayer.add(this->rt, std::move(tsm));
   auto Sym = this->session
                  ->lookup({&this->mainJD}, mangle(Constants::anonymousExprName))
                  .get();
-  auto *fp = Sym.toPtr<float *(*)()>();
-  auto *res = fp();
-
-  // TODO: make this work for dimensions larger than 1.
-  for (int i = 0; i < resultShape[0]; ++i) {
-    cout << *(res + i) << " ";
-  }
-  cout << "\n";
-
-  rt->remove();
+  auto *fp = Sym.toPtr<Constants::CompilerFunc>();
+  return fp;
 }
 } // namespace AplCompiler
