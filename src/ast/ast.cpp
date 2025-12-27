@@ -161,24 +161,24 @@ const string Call::print() const {
 // end Call section
 
 // Assign section
-AssignStmt::AssignStmt(const string &varName, unique_ptr<Node> &rhs)
-    : lhs(make_unique<Variable>(varName)), rhs(std::move(rhs)) {}
+AssignStmt::AssignStmt(const string varName, unique_ptr<Node> &rhs)
+    : Node(rhs->getShape()), varName(varName), rhs(std::move(rhs)) {}
 
-unique_ptr<AssignStmt> AssignStmt::create(const string &varName,
+unique_ptr<AssignStmt> AssignStmt::create(const string varName,
                                           unique_ptr<Node> &rhs) {
   return make_unique<AssignStmt>(varName, rhs);
 }
 
-const unique_ptr<Variable> &AssignStmt::getLhs() const { return this->lhs; }
+const string AssignStmt::getVarName() const { return this->varName; }
 
 const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
 
 llvm::Value *AssignStmt::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return nullptr;
+  return codegenManager->assignCodegen(this->varName, this->rhs->codegen(codegenManager, false));
 }
 
 const string AssignStmt::print() const {
-  return "Assign(" + this->lhs->print() + "," + this->rhs->print() + ")";
+  return "Assign(" + this->varName + "," + this->rhs->print() + ")";
 }
 // end Assign section
 

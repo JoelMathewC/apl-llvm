@@ -85,16 +85,16 @@ public:
 };
 
 // Assignment statements in the APL AST
-class AssignStmt : public Tree {
-  const unique_ptr<Variable> lhs;
+class AssignStmt : public Node {
+  const string varName;
   const unique_ptr<Node> rhs;
   llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
 
 public:
-  AssignStmt(const string &varName, unique_ptr<Node> &rhs);
-  static unique_ptr<AssignStmt> create(const string &varName,
+  AssignStmt(const string varName, unique_ptr<Node> &rhs);
+  static unique_ptr<AssignStmt> create(const string varName,
                                        unique_ptr<Node> &rhs);
-  const unique_ptr<Variable> &getLhs() const;
+  const string getVarName() const;
   const unique_ptr<Node> &getRhs() const;
   const string print() const override;
 };

@@ -113,7 +113,10 @@ Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2) {
 
 Value *LlvmCodegen::callCodegen() { return 0; }
 
-Value *LlvmCodegen::assignCodegen() { return 0; }
+Value *LlvmCodegen::assignCodegen(const string varName, Value *val) {
+  this->variableMap[varName] = val;
+  return val;
+}
 
 pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
 LlvmCodegen::getAndReinitializeContextAndModule() {
