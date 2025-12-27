@@ -5,6 +5,15 @@
 using namespace std;
 
 namespace AplOp {
+// Local Function
+unsigned long getNumElemFromShape(vector<unsigned long> resultShape) {
+  unsigned long numElem = 1;
+  for (auto idx : resultShape)
+    numElem *= idx;
+  return numElem;
+}
+// End local Function
+
 bool DyadicOp::isOperandShapeCorrect(
     vector<unsigned long> firstOperandShape,
     vector<unsigned long> secondOperandShape) const {
@@ -40,53 +49,43 @@ const string AddOp::print() const { return "+"; }
 
 Value *AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
                       Value *rhs, vector<unsigned long> resultShape) {
-  unsigned long numElem = 1;
-  for (auto idx : resultShape)
-    numElem *= idx;
-  return codegenManager->addCodegen(lhs, rhs, numElem);
+  return codegenManager->addCodegen(lhs, rhs, getNumElemFromShape(resultShape));
 }
 
 const string SubOp::print() const { return "-"; }
 
 Value *SubOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
                       Value *rhs, vector<unsigned long> resultShape) {
-  return nullptr;
+  return codegenManager->subCodegen(lhs, rhs, getNumElemFromShape(resultShape));
 }
 
 const string MulOp::print() const { return "x"; }
 
 Value *MulOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
                       Value *rhs, vector<unsigned long> resultShape) {
-  return nullptr;
-}
-
-const string ExpOp::print() const { return "*"; }
-
-Value *ExpOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                      Value *rhs, vector<unsigned long> resultShape) {
-  return nullptr;
+  return codegenManager->mulCodegen(lhs, rhs, getNumElemFromShape(resultShape));
 }
 
 const string DivOp::print() const { return "÷"; }
 
 Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
                       Value *rhs, vector<unsigned long> resultShape) {
-  return nullptr;
+  return codegenManager->divCodegen(lhs, rhs, getNumElemFromShape(resultShape));
 }
 
 unique_ptr<AplOp::DyadicOp> createDyadicOp(char op) {
-  // TODO: add support for ÷
-  switch (op) {
-  case '+':
+  // The op needs to be case to string since some glyphs cannot be
+  // represented as chars
+  string op_str = string(1, op);
+  if (op_str == "+")
     return make_unique<AplOp::AddOp>();
-  case '-':
+  else if (op_str == "-")
     return make_unique<AplOp::SubOp>();
-  case 'x':
+  else if (op_str == "x")
     return make_unique<AplOp::MulOp>();
-  case '*':
-    return make_unique<AplOp::ExpOp>();
-  default:
-    throw std::logic_error("Operation " + string(1, op) + " is unimplemented!");
-  }
+  else if (op_str == "÷")
+    return make_unique<AplOp::DivOp>();
+  else
+    throw std::logic_error("Operation " + op_str + " is unimplemented!");
 }
 } // namespace AplOp

@@ -22,10 +22,14 @@ public:
   LlvmCodegen(llvm::DataLayout dataLayout);
   ~LlvmCodegen();
 
-  Value *literalCodegen(const vector<float> vec);
-  Value *addCodegen(Value *arg1, Value *arg2, unsigned long numElem);
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
   void returnCodegen(Value *returnExpr);
+  Value *literalCodegen(const vector<float> vec);
+
+  Value *addCodegen(Value *arg1, Value *arg2, unsigned long numElem);
+  Value *subCodegen(Value *arg1, Value *arg2, unsigned long numElem);
+  Value *mulCodegen(Value *arg1, Value *arg2, unsigned long numElem);
+  Value *divCodegen(Value *arg1, Value *arg2, unsigned long numElem);
 };
 } // namespace AplCodegen

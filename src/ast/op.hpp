@@ -63,12 +63,5 @@ public:
   const string print() const override;
 };
 
-class ExpOp : public ShapeRetainingDyadicOp {
-public:
-  Value *codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                 Value *rhs, vector<unsigned long> resultShape) override;
-  const string print() const override;
-};
-
 unique_ptr<DyadicOp> createDyadicOp(char op);
 } // namespace AplOp

@@ -22,7 +22,7 @@ We don't diffrentiate between monadic and dyadic operators here since most
 APL glyphs can serve as monadic and dyadic operators and the lexer cannot distinguish
 without context so we differ the distinction to the parser.
 */
-OPERATOR [+\-x*÷]
+OPERATOR [+\-x÷]
 
 %%
 [ \t]+     {}
