@@ -32,9 +32,6 @@ OPERATOR [+\-x*÷]
 "quit()"    {return token::EXIT;}
 [()]	    {return *yytext;}
 
-"←" {return token::LEFT_ARROW;}
-"⋄" {return token::DIAMOND;}
-
 {OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
 [_a-zA-Z⍙∆]+        {yylval->emplace<std::string>(yytext); return token::VARIABLE;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}

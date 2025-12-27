@@ -26,7 +26,6 @@ public:
   Value *variableCodegen(string name);
   Value *addCodegen(Value *arg1, Value *arg2);
   Value *callCodegen();
-  Value *assignCodegen(const string varName, Value* val);
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
   Function *wrapInAnonymousFunction(Value *exprIR);

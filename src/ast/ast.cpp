@@ -28,25 +28,16 @@ unique_ptr<AplOp::Op> createOp(char op) {
 }
 // End LocalFunctions section
 
-// Term section
-Term::~Term() = default;
-
-const string Term::print() const { return "TERM"; }
-
-llvm::Value *Term::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return nullptr;
-}
-
-llvm::Value *Term::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                           bool isTopLvlExpr) {
-  return nullptr;
-}
-// End Term section
-
 // Node section
+Node::Node(const vector<unsigned long> shape) : shape(shape) {}
+
+Node::~Node() = default;
+
 const vector<unsigned long> Node::getShape() { return this->shape; }
 
-Node::Node(const vector<unsigned long> shape) : shape(shape) {}
+llvm::Value *Node::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
+  return nullptr;
+}
 
 llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager,
                            bool isTopLvlExpr) {
@@ -55,14 +46,9 @@ llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager,
         this->codegen_(codegenManager));
   return this->codegen_(codegenManager);
 }
-// End Node Section
 
-// Tree section
-llvm::Value *Tree::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                           bool isTopLvlExpr) {
-  return this->codegen_(codegenManager);
-}
-// End Tree section
+const string Node::print() const { return "unspecialized-node"; }
+// End Node Section
 
 // Literal section
 Literal::Literal(const vector<float> val)
@@ -160,31 +146,9 @@ const string Call::print() const {
 }
 // end Call section
 
-// Assign section
-AssignStmt::AssignStmt(const string varName, unique_ptr<Node> &rhs)
-    : Node(rhs->getShape()), varName(varName), rhs(std::move(rhs)) {}
-
-unique_ptr<AssignStmt> AssignStmt::create(const string varName,
-                                          unique_ptr<Node> &rhs) {
-  return make_unique<AssignStmt>(varName, rhs);
-}
-
-const string AssignStmt::getVarName() const { return this->varName; }
-
-const unique_ptr<Node> &AssignStmt::getRhs() const { return this->rhs; }
-
-llvm::Value *AssignStmt::codegen_(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->assignCodegen(this->varName, this->rhs->codegen(codegenManager, false));
-}
-
-const string AssignStmt::print() const {
-  return "Assign(" + this->varName + "," + this->rhs->print() + ")";
-}
-// end Assign section
-
 // Misc. section
-ostream &operator<<(ostream &os, const Term &term) {
-  return os << term.print();
+ostream &operator<<(ostream &os, const Node &node) {
+  return os << node.print();
 }
 // end Misc. section
 } // namespace AplAst

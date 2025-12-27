@@ -15,32 +15,19 @@
 using namespace std;
 
 namespace AplAst {
-// Root abstract class for APL AST
-class Term {
+// Abstract class for nodes in APL AST that evaluate to expressions
+class Node {
 protected:
   virtual llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager);
-
-public:
-  virtual llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr) ;
-  virtual const string print() const;
-  virtual ~Term();
-};
-
-// Abstract class for nodes in APL AST that evaluate to expressions
-class Node : public Term {
-protected:
   const vector<unsigned long> shape;
   Node(const vector<unsigned long> shape);
 
 public:
   const vector<unsigned long> getShape();
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr)  override;
-};
-
-// Abstract class for nodes in APL AST that are standalone statements
-class Tree : public Term {
-public:
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager, bool isTopLvlExpr)  override;
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager,
+                       bool isTopLvlExpr);
+  virtual const string print() const;
+  virtual ~Node();
 };
 
 // Literal node in the APL AST
@@ -84,21 +71,6 @@ public:
   const string print() const override;
 };
 
-// Assignment statements in the APL AST
-class AssignStmt : public Node {
-  const string varName;
-  const unique_ptr<Node> rhs;
-  llvm::Value *codegen_(AplCodegen::LlvmCodegen *codegenManager) override;
-
-public:
-  AssignStmt(const string varName, unique_ptr<Node> &rhs);
-  static unique_ptr<AssignStmt> create(const string varName,
-                                       unique_ptr<Node> &rhs);
-  const string getVarName() const;
-  const unique_ptr<Node> &getRhs() const;
-  const string print() const override;
-};
-
 // ostream overlead for APL AST Node
-ostream &operator<<(ostream &os, const Term &term);
+ostream &operator<<(ostream &os, const Node &node);
 } // namespace AplAst
