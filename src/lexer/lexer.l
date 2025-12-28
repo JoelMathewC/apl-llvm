@@ -37,6 +37,7 @@ without context so we differ the distinction to the parser.
 "x"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::TIMES); return token::OPERATOR;}
 "÷"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::DIVIDE); return token::OPERATOR;}
 
+"¯"         {return token::HIGH_MINUS;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}
 
 .   {printf("unknown character: %c", *yytext); return *yytext;}

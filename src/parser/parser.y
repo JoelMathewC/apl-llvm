@@ -34,7 +34,7 @@
 
 %token <float> LITERAL
 %token <AplOp::Symbol> OPERATOR
-%token <char> INPUT_COMPLETED EXIT
+%token <char> INPUT_COMPLETED EXIT HIGH_MINUS
 
 %right OPERATOR
 
@@ -50,8 +50,10 @@ op_expr: '(' op_expr ')'        {$$ = std::move($2);}
     | op_expr OPERATOR op_expr  {$$ = AplAst::DyadicCall::create($2, $1, $3);}    
     | array                     {$$ = std::move($1);}
 
-array: array LITERAL    {$$ = AplAst::Literal::create($1->getVal(),$2);}
-    | LITERAL           {$$ = AplAst::Literal::create($1);}
+array: array LITERAL                {$$ = AplAst::Literal::create($1->getVal(),$2);}
+    | array HIGH_MINUS LITERAL      {$$ = AplAst::Literal::create($1->getVal(),-1*$3);}
+    | HIGH_MINUS LITERAL            {$$ = AplAst::Literal::create(-1 * $2);}
+    | LITERAL                       {$$ = AplAst::Literal::create($1);}
 
 %%
 
