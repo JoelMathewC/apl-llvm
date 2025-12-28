@@ -43,11 +43,10 @@ JITCompiler::JITCompiler(unique_ptr<ExecutionSession> session,
     this->objectLayer.setOverrideObjectFlagsWithResponsibilityFlags(true);
     this->objectLayer.setAutoClaimResponsibilityForObjectSymbols(true);
   }
-  this->rt = this->mainJD.getDefaultResourceTracker();
+  this->rt = nullptr;
 }
 
 JITCompiler::~JITCompiler() {
-  Error error = this->rt->remove();
   if (auto Err = this->session->endSession())
     session->reportError(std::move(Err));
 }
@@ -84,6 +83,11 @@ JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 Constants::CompilerFunc
 JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager,
                      Value *returnExpr) {
+
+  if (this->rt != nullptr)
+    Error error1 = this->rt->remove();
+  this->rt = this->mainJD.getDefaultResourceTracker();
+
   codegenManager->returnCodegen(returnExpr);
   auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
   // module->print(errs(), nullptr);

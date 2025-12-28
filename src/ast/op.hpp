@@ -8,6 +8,8 @@ using namespace std;
 using namespace llvm;
 
 namespace AplOp {
+enum Symbol { PLUS, MINUS, TIMES, DIVIDE };
+
 class Op {
 public:
   virtual const string print() const;
@@ -63,5 +65,5 @@ public:
   const string print() const override;
 };
 
-unique_ptr<DyadicOp> createDyadicOp(char op);
+unique_ptr<DyadicOp> createDyadicOp(Symbol op);
 } // namespace AplOp

@@ -7,6 +7,7 @@
     #include <iostream>
     #include <vector>
     #include "../ast/ast.hpp"
+    #include "../ast/op.hpp"
 
     // Since the parser.g.hpp file will not include AplLexer
     // we define a declaration here for the time being.
@@ -32,7 +33,8 @@
 %type <std::unique_ptr<AplAst::Literal>> array
 
 %token <float> LITERAL
-%token <char> INPUT_COMPLETED EXIT OPERATOR
+%token <AplOp::Symbol> OPERATOR
+%token <char> INPUT_COMPLETED EXIT
 
 %right OPERATOR
 

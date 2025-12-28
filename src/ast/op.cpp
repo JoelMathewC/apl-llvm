@@ -73,19 +73,18 @@ Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
   return codegenManager->divCodegen(lhs, rhs, getNumElemFromShape(resultShape));
 }
 
-unique_ptr<AplOp::DyadicOp> createDyadicOp(char op) {
-  // The op needs to be case to string since some glyphs cannot be
-  // represented as chars
-  string op_str = string(1, op);
-  if (op_str == "+")
+unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {
+  switch (op) {
+  case Symbol::PLUS:
     return make_unique<AplOp::AddOp>();
-  else if (op_str == "-")
+  case Symbol::MINUS:
     return make_unique<AplOp::SubOp>();
-  else if (op_str == "x")
+  case Symbol::TIMES:
     return make_unique<AplOp::MulOp>();
-  else if (op_str == "÷")
+  case Symbol::DIVIDE:
     return make_unique<AplOp::DivOp>();
-  else
-    throw std::logic_error("Operation " + op_str + " is unimplemented!");
+  default:
+    throw std::logic_error("Operation is unimplemented!");
+  }
 }
 } // namespace AplOp

@@ -1,6 +1,7 @@
 %{
     
     #include "AplLexer.hpp"
+    #include "../ast/op.hpp"
     #include "../parser/parser.g.hpp"
     #include <iostream>
     typedef yy::parser::token token;
@@ -18,11 +19,10 @@
 %option c++ noyywrap yyclass="AplLexer"
 
 /*
-We don't diffrentiate between monadic and dyadic operators here since most
+We don't diffrentiate between monadic and dyadic operators within the lexer since most
 APL glyphs can serve as monadic and dyadic operators and the lexer cannot distinguish
 without context so we differ the distinction to the parser.
 */
-OPERATOR [+\-x÷]
 
 %%
 [ \t]+     {}
@@ -32,7 +32,11 @@ OPERATOR [+\-x÷]
 "quit()"    {return token::EXIT;}
 [()]	    {return *yytext;}
 
-{OPERATOR}          {yylval->emplace<char>(*yytext); return token::OPERATOR;}
+"+"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::PLUS); return token::OPERATOR;}
+"-"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::MINUS); return token::OPERATOR;}
+"x"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::TIMES); return token::OPERATOR;}
+"÷"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::DIVIDE); return token::OPERATOR;}
+
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}
 
 .   {printf("unknown character: %c", *yytext); return *yytext;}

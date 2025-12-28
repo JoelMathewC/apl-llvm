@@ -67,7 +67,7 @@ DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
     : Node(op->getResultShape(arg1->getShape(), arg2->getShape())),
       op(std::move(op)), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
-unique_ptr<DyadicCall> DyadicCall::create(char op, unique_ptr<Node> &arg1,
+unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op, unique_ptr<Node> &arg1,
                                           unique_ptr<Node> &arg2) {
   auto dyadicOp = AplOp::createDyadicOp(op);
   if (!dyadicOp->isOperandShapeCorrect(arg1->getShape(), arg2->getShape())) {

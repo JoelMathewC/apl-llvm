@@ -50,7 +50,7 @@ class DyadicCall : public Node {
 public:
   DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
              unique_ptr<Node> arg2);
-  static unique_ptr<DyadicCall> create(char op, unique_ptr<Node> &arg1,
+  static unique_ptr<DyadicCall> create(AplOp::Symbol op, unique_ptr<Node> &arg1,
                                        unique_ptr<Node> &arg2);
   llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
