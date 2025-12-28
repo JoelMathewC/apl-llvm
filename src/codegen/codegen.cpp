@@ -62,6 +62,47 @@ Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
   return rawPtr;
 }
 
+Value *LlvmCodegen::negateCodegen(Value *arg, unsigned long numElem) {
+  // Allocate space to store the value of the iterator
+  AllocaInst *alloca =
+      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
+  builder->CreateStore(builder->getInt32(0), alloca);
+
+  // Add an explicit fall through to the loop body block
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
+  this->builder->CreateBr(LoopBB);
+  this->builder->SetInsertPoint(LoopBB);
+
+  // Use the iterator to fetch pointers to the current elems of the array
+  // being processed.
+  Value *currVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
+  Value *argPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                           arg, {currVal});
+
+  // Load the elems of arrays, perform addition and store the result in the
+  // first array elem location.
+  Value *argVal =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), argPtr);
+
+  Value *sumVal = this->builder->CreateFSub(
+      ConstantFP::get(*this->context, APFloat((float)0)), argVal);
+  this->builder->CreateStore(sumVal, argPtr);
+
+  // Increment the iterator and tests for the exit condition
+  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
+  this->builder->CreateStore(nextVal, alloca);
+  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
+
+  // Create a block for execution after the loop
+  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
+  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
+  this->builder->SetInsertPoint(AfterLoopBB);
+
+  return arg;
+}
+
 Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2,
                                unsigned long numElem) {
   // Allocate space to store the value of the iterator

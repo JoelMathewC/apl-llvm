@@ -27,6 +27,8 @@ public:
   void returnCodegen(Value *returnExpr);
   Value *literalCodegen(const vector<float> vec);
 
+  Value *negateCodegen(Value *arg, unsigned long numElem);
+
   Value *addCodegen(Value *arg1, Value *arg2, unsigned long numElem);
   Value *subCodegen(Value *arg1, Value *arg2, unsigned long numElem);
   Value *mulCodegen(Value *arg1, Value *arg2, unsigned long numElem);

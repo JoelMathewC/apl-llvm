@@ -46,7 +46,7 @@ start: prgm INPUT_COMPLETED {astRetPtr = std::move($1); YYACCEPT;}
 prgm: op_expr           {$$ = std::move($1);} 
 
 op_expr: '(' op_expr ')'        {$$ = std::move($2);}
-    | OPERATOR op_expr          {}    
+    | OPERATOR op_expr          {$$ = AplAst::MonadicCall::create($1, $2);}    
     | op_expr OPERATOR op_expr  {$$ = AplAst::DyadicCall::create($2, $1, $3);}    
     | array                     {$$ = std::move($1);}
 

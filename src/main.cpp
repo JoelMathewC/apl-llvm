@@ -42,7 +42,7 @@ void printResult(float *res, vector<unsigned long> shape) {
 }
 
 int main() {
-  cout << "\033[32m=== APL 1.0 REPL ===\033[0m\n";
+  cout << "\033[32m=== APL REPL v0.1 ===\033[0m\n";
   cout << "Type \"quit()\" to exit this program\n";
   AplLexer lexer;
   std::unique_ptr<AplAst::Node> astRetPtr;

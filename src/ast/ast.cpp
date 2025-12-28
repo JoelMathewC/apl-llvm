@@ -61,13 +61,35 @@ const string Literal::print() const {
 }
 // end Literal section
 
+// MonadicCall section
+MonadicCall::MonadicCall(unique_ptr<AplOp::MonadicOp> op, unique_ptr<Node> arg)
+    : Node(op->getResultShape(arg->getShape())), op(std::move(op)),
+      arg(std::move(arg)) {}
+
+unique_ptr<MonadicCall> MonadicCall::create(AplOp::Symbol op,
+                                            unique_ptr<Node> &arg) {
+  auto monadicOp = AplOp::createMonadicOp(op);
+  return make_unique<MonadicCall>(std::move(monadicOp), std::move(arg));
+}
+
+llvm::Value *MonadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+  return this->op->codegen(codegenManager, this->arg->codegen(codegenManager),
+                           this->getShape());
+}
+
+const string MonadicCall::print() const {
+  return "MonadicCall(" + this->op->print() + "," + this->arg->print() + ")";
+}
+// end MonadicCall section
+
 // DyadicCall section
 DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
                        unique_ptr<Node> arg2)
     : Node(op->getResultShape(arg1->getShape(), arg2->getShape())),
       op(std::move(op)), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
-unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op, unique_ptr<Node> &arg1,
+unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op,
+                                          unique_ptr<Node> &arg1,
                                           unique_ptr<Node> &arg2) {
   auto dyadicOp = AplOp::createDyadicOp(op);
   if (!dyadicOp->isOperandShapeCorrect(arg1->getShape(), arg2->getShape())) {

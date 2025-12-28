@@ -41,6 +41,18 @@ public:
   const string print() const override;
 };
 
+// An APL AST expression node that evaluates monadic ops on args
+class MonadicCall : public Node {
+  const unique_ptr<AplOp::MonadicOp> op;
+  const unique_ptr<Node> arg;
+
+public:
+  MonadicCall(unique_ptr<AplOp::MonadicOp> op, unique_ptr<Node> arg);
+  static unique_ptr<MonadicCall> create(AplOp::Symbol op, unique_ptr<Node> &arg);
+  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  const string print() const override;
+};
+
 // An APL AST expression node that evaluates dyadic ops on args
 class DyadicCall : public Node {
   const unique_ptr<AplOp::DyadicOp> op;
