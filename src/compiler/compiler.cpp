@@ -90,7 +90,7 @@ JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager,
 
   codegenManager->returnCodegen(returnExpr);
   auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
-  // module->print(errs(), nullptr);
+  module->print(errs(), nullptr);
 
   auto tsm = llvm::orc::ThreadSafeModule(std::move(module), std::move(context));
   Error error = this->compileLayer.add(this->rt, std::move(tsm));

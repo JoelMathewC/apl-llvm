@@ -289,6 +289,30 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
 }
 
 void LlvmCodegen::returnCodegen(Value *returnExpr) {
+  // 1. Define the return type (int)
+  Type *intType = Type::getInt32Ty(*this->context);
+
+  // 2. Define the first argument type (char*)
+  Type *charPtrType = PointerType::getUnqual(Type::getInt8Ty(*this->context));
+
+  // 3. Create the function signature: int printf(char*, ...)
+  // The 'true' parameter indicates it is a variadic function
+  FunctionType *printfType = FunctionType::get(intType, {charPtrType}, true);
+
+  // 4. Get or Insert the function into the module
+  FunctionCallee printfFn =
+      this->module->getOrInsertFunction("printf", printfType);
+
+  // Create the format string constant (e.g., "Hello %d\n")
+  Value *formatStr = this->builder->CreateGlobalString("Value: %f\n");
+
+  // Prepare the arguments (format string + values to print)
+  std::vector<Value *> printfArgs = {
+      formatStr, ConstantFP::get(*this->context, APFloat(1.0))};
+
+  // Emit the call instruction
+  this->builder->CreateCall(printfFn, printfArgs, "printfCall");
+
   this->builder->CreateRet(returnExpr);
 }
 } // namespace AplCodegen
