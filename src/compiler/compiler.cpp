@@ -82,13 +82,13 @@ JITDylib &JITCompiler::getMainJITDylib() { return this->mainJD; }
 
 Constants::CompilerFunc
 JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager,
-                     Value *returnExpr) {
+                     AplCodegen::RValue returnExpr) {
 
   if (this->rt != nullptr)
     Error error1 = this->rt->remove();
   this->rt = this->mainJD.getDefaultResourceTracker();
 
-  codegenManager->returnCodegen(returnExpr);
+  codegenManager->returnCodegen(returnExpr.getResultPtr());
   auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
   module->print(errs(), nullptr);
 

@@ -22,7 +22,7 @@ protected:
   Node(const vector<unsigned long> shape);
 
 public:
-  virtual llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager);
+  virtual AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager);
   const vector<unsigned long> getShape();
   virtual const string print() const;
   virtual ~Node();
@@ -37,7 +37,7 @@ public:
   static unique_ptr<Literal> create(float val);
   static unique_ptr<Literal> create(vector<float> vec, float new_elem);
   const vector<float> &getVal() const;
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 
@@ -48,8 +48,9 @@ class MonadicCall : public Node {
 
 public:
   MonadicCall(unique_ptr<AplOp::MonadicOp> op, unique_ptr<Node> arg);
-  static unique_ptr<MonadicCall> create(AplOp::Symbol op, unique_ptr<Node> &arg);
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  static unique_ptr<MonadicCall> create(AplOp::Symbol op,
+                                        unique_ptr<Node> &arg);
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 
@@ -64,7 +65,7 @@ public:
              unique_ptr<Node> arg2);
   static unique_ptr<DyadicCall> create(AplOp::Symbol op, unique_ptr<Node> &arg1,
                                        unique_ptr<Node> &arg2);
-  llvm::Value *codegen(AplCodegen::LlvmCodegen *codegenManager) override;
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 

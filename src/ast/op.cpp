@@ -20,9 +20,9 @@ MonadicOp::getResultShape(vector<unsigned long> operandShape) const {
   return {};
 }
 
-Value *MonadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                          Value *operand, vector<unsigned long> resultShape) {
-  return nullptr;
+AplCodegen::RValue MonadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                      AplCodegen::RValue operand) {
+  return AplCodegen::RValue(nullptr, nullptr, nullptr);
 }
 
 const vector<unsigned long> ShapeRetainingMonadicOp::getResultShape(
@@ -30,11 +30,11 @@ const vector<unsigned long> ShapeRetainingMonadicOp::getResultShape(
   return operandShape;
 }
 
-Value *NegateOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                         Value *operand, vector<unsigned long> resultShape) {
-  return codegenManager->negateCodegen(operand,
-                                       getNumElemFromShape(resultShape));
-}
+// Value *NegateOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+//                          Value *operand, vector<unsigned long> resultShape) {
+//   return codegenManager->negateCodegen(operand,
+//                                        getNumElemFromShape(resultShape));
+// }
 // endregion MonadicOp
 
 // region DyadicOp
@@ -50,9 +50,10 @@ DyadicOp::getResultShape(vector<unsigned long> firstOperandShape,
   return {};
 }
 
-Value *DyadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                         Value *rhs, vector<unsigned long> resultShape) {
-  return nullptr;
+AplCodegen::RValue DyadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                     AplCodegen::RValue lhs,
+                                     AplCodegen::RValue rhs) {
+  return AplCodegen::RValue(nullptr, nullptr, nullptr);
 }
 
 bool ShapeRetainingDyadicOp::isOperandShapeCorrect(
@@ -67,25 +68,29 @@ const vector<unsigned long> ShapeRetainingDyadicOp::getResultShape(
   return firstOperandShape;
 }
 
-Value *AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                      Value *rhs, vector<unsigned long> resultShape) {
-  return codegenManager->addCodegen(lhs, rhs, getNumElemFromShape(resultShape));
+AplCodegen::RValue AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                  AplCodegen::RValue lhs,
+                                  AplCodegen::RValue rhs) {
+  return codegenManager->addCodegen(lhs, rhs);
 }
 
-Value *SubOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                      Value *rhs, vector<unsigned long> resultShape) {
-  return codegenManager->subCodegen(lhs, rhs, getNumElemFromShape(resultShape));
-}
+// Value *SubOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+//                       Value *rhs, vector<unsigned long> resultShape) {
+//   return codegenManager->subCodegen(lhs, rhs,
+//   getNumElemFromShape(resultShape));
+// }
 
-Value *MulOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                      Value *rhs, vector<unsigned long> resultShape) {
-  return codegenManager->mulCodegen(lhs, rhs, getNumElemFromShape(resultShape));
-}
+// Value *MulOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+//                       Value *rhs, vector<unsigned long> resultShape) {
+//   return codegenManager->mulCodegen(lhs, rhs,
+//   getNumElemFromShape(resultShape));
+// }
 
-Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
-                      Value *rhs, vector<unsigned long> resultShape) {
-  return codegenManager->divCodegen(lhs, rhs, getNumElemFromShape(resultShape));
-}
+// Value *DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager, Value *lhs,
+//                       Value *rhs, vector<unsigned long> resultShape) {
+//   return codegenManager->divCodegen(lhs, rhs,
+//   getNumElemFromShape(resultShape));
+// }
 // endregion DyadicOp
 
 // region HelperMethods
@@ -93,12 +98,12 @@ unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {
   switch (op) {
   case Symbol::PLUS:
     return make_unique<AplOp::AddOp>();
-  case Symbol::MINUS:
-    return make_unique<AplOp::SubOp>();
-  case Symbol::TIMES:
-    return make_unique<AplOp::MulOp>();
-  case Symbol::DIVIDE:
-    return make_unique<AplOp::DivOp>();
+  // case Symbol::MINUS:
+  //   return make_unique<AplOp::SubOp>();
+  // case Symbol::TIMES:
+  //   return make_unique<AplOp::MulOp>();
+  // case Symbol::DIVIDE:
+  //   return make_unique<AplOp::DivOp>();
   default:
     throw std::logic_error("Specified dyadic operation is unimplemented!");
   }
@@ -106,8 +111,8 @@ unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {
 
 unique_ptr<AplOp::MonadicOp> createMonadicOp(Symbol op) {
   switch (op) {
-  case Symbol::MINUS:
-    return make_unique<AplOp::NegateOp>();
+  // case Symbol::MINUS:
+  //   return make_unique<AplOp::NegateOp>();
   default:
     throw std::logic_error("Specified monadic operation is unimplemented!");
   }
@@ -115,9 +120,9 @@ unique_ptr<AplOp::MonadicOp> createMonadicOp(Symbol op) {
 // endregion HelperMethods
 
 const string Op::print() const { return "unspecified-op"; }
-const string NegateOp::print() const { return "-"; }
+// const string NegateOp::print() const { return "-"; }
 const string AddOp::print() const { return "+"; }
-const string SubOp::print() const { return "-"; }
-const string MulOp::print() const { return "x"; }
-const string DivOp::print() const { return "÷"; }
+// const string SubOp::print() const { return "-"; }
+// const string MulOp::print() const { return "x"; }
+// const string DivOp::print() const { return "÷"; }
 } // namespace AplOp

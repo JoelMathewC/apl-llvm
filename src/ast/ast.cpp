@@ -19,8 +19,8 @@ Node::~Node() = default;
 
 const vector<unsigned long> Node::getShape() { return this->shape; }
 
-llvm::Value *Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return nullptr;
+AplCodegen::RValue Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+  return AplCodegen::RValue(nullptr, nullptr, nullptr);
 }
 
 const string Node::print() const { return "unspecialized-node"; }
@@ -42,7 +42,7 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 
 const vector<float> &Literal::getVal() const { return this->val; }
 
-llvm::Value *Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+AplCodegen::RValue Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return codegenManager->literalCodegen(this->val);
 }
 
@@ -72,9 +72,9 @@ unique_ptr<MonadicCall> MonadicCall::create(AplOp::Symbol op,
   return make_unique<MonadicCall>(std::move(monadicOp), std::move(arg));
 }
 
-llvm::Value *MonadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return this->op->codegen(codegenManager, this->arg->codegen(codegenManager),
-                           this->getShape());
+AplCodegen::RValue
+MonadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+  return this->op->codegen(codegenManager, this->arg->codegen(codegenManager));
 }
 
 const string MonadicCall::print() const {
@@ -99,10 +99,10 @@ unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op,
                                  std::move(arg2));
 }
 
-llvm::Value *DyadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
+AplCodegen::RValue
+DyadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return this->op->codegen(codegenManager, this->arg1->codegen(codegenManager),
-                           this->arg2->codegen(codegenManager),
-                           this->getShape());
+                           this->arg2->codegen(codegenManager));
 }
 
 const string DyadicCall::print() const {

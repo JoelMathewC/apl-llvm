@@ -11,10 +11,18 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
+Value *RValue::getResultPtr() { return this->resultPtr; }
+Value *RValue::getShapePtr() { return this->shapePtr; }
+Value *RValue::getShapeLength() { return this->shapeLength; }
+RValue::RValue(Value *resultPtr, Value *shapePtr, Value *shapeLength)
+    : resultPtr(resultPtr), shapePtr(shapePtr), shapeLength(shapeLength) {}
+
 LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
   this->dataLayout = dataLayout;
   this->initializeContextAndModule();
 }
+
+LlvmCodegen::~LlvmCodegen() = default;
 
 void LlvmCodegen::initializeContextAndModule() {
   this->context = make_unique<LLVMContext>();
@@ -33,252 +41,6 @@ void LlvmCodegen::initializeContextAndModule() {
   this->builder->SetInsertPoint(BB);
 }
 
-LlvmCodegen::~LlvmCodegen() = default;
-
-Value *LlvmCodegen::literalCodegen(const vector<float> vec) {
-  // Add the malloc function (if it doesnt exist).
-  FunctionCallee mallocFunc = this->module->getOrInsertFunction(
-      Constants::heapAllocFuncName, this->builder->getPtrTy(),
-      Type::getInt32Ty(*this->context));
-
-  // Get the size that needs to be reserved and reserve it.
-  uint64_t elementSize =
-      this->module->getDataLayout().getTypeAllocSize(this->builder->getPtrTy());
-  Value *totalSize = ConstantInt::get(Type::getInt32Ty(*this->context),
-                                      vec.size() * elementSize);
-  Value *rawPtr = this->builder->CreateCall(mallocFunc, totalSize);
-
-  // Create a global variable with the literal constant value.
-  ArrayType *arrTy =
-      ArrayType::get(Type::getFloatTy(*this->context), vec.size());
-  Constant *init =
-      ConstantDataArray::get(*this->context, ArrayRef(vec.data(), vec.size()));
-  llvm::GlobalVariable *sourceGlobal = new llvm::GlobalVariable(
-      *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init);
-
-  // Initiate a memcpy of the global constant into the reserved memory location.
-  this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
-                              MaybeAlign(0), totalSize);
-  return rawPtr;
-}
-
-Value *LlvmCodegen::negateCodegen(Value *arg, unsigned long numElem) {
-  // Allocate space to store the value of the iterator
-  AllocaInst *alloca =
-      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(builder->getInt32(0), alloca);
-
-  // Add an explicit fall through to the loop body block
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateBr(LoopBB);
-  this->builder->SetInsertPoint(LoopBB);
-
-  // Use the iterator to fetch pointers to the current elems of the array
-  // being processed.
-  Value *currVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
-  Value *argPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                           arg, {currVal});
-
-  // Load the elems of arrays, perform addition and store the result in the
-  // first array elem location.
-  Value *argVal =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), argPtr);
-
-  Value *sumVal = this->builder->CreateFSub(
-      ConstantFP::get(*this->context, APFloat((float)0)), argVal);
-  this->builder->CreateStore(sumVal, argPtr);
-
-  // Increment the iterator and tests for the exit condition
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
-  this->builder->CreateStore(nextVal, alloca);
-  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
-
-  // Create a block for execution after the loop
-  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
-  this->builder->SetInsertPoint(AfterLoopBB);
-
-  return arg;
-}
-
-Value *LlvmCodegen::addCodegen(Value *arg1, Value *arg2,
-                               unsigned long numElem) {
-  // Allocate space to store the value of the iterator
-  AllocaInst *alloca =
-      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(builder->getInt32(0), alloca);
-
-  // Add an explicit fall through to the loop body block
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateBr(LoopBB);
-  this->builder->SetInsertPoint(LoopBB);
-
-  // Use the iterator to fetch pointers to the current elems of the array
-  // being processed.
-  Value *currVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
-  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg1, {currVal});
-  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg2, {currVal});
-
-  // Load the elems of arrays, perform addition and store the result in the
-  // first array elem location.
-  Value *arg1Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
-  Value *arg2Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
-  Value *sumVal = this->builder->CreateFAdd(arg1Val, arg2Val);
-  this->builder->CreateStore(sumVal, arg1Ptr);
-
-  // Increment the iterator and tests for the exit condition
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
-  this->builder->CreateStore(nextVal, alloca);
-  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
-
-  // Create a block for execution after the loop
-  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
-  this->builder->SetInsertPoint(AfterLoopBB);
-
-  return arg1;
-}
-
-Value *LlvmCodegen::subCodegen(Value *arg1, Value *arg2,
-                               unsigned long numElem) {
-  // Allocate space to store the value of the iterator
-  AllocaInst *alloca =
-      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(builder->getInt32(0), alloca);
-
-  // Add an explicit fall through to the loop body block
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateBr(LoopBB);
-  this->builder->SetInsertPoint(LoopBB);
-
-  // Use the iterator to fetch pointers to the current elems of the array
-  // being processed.
-  Value *currVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
-  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg1, {currVal});
-  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg2, {currVal});
-
-  // Load the elems of arrays, perform addition and store the result in the
-  // first array elem location.
-  Value *arg1Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
-  Value *arg2Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
-  Value *sumVal = this->builder->CreateFSub(arg1Val, arg2Val);
-  this->builder->CreateStore(sumVal, arg1Ptr);
-
-  // Increment the iterator and tests for the exit condition
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
-  this->builder->CreateStore(nextVal, alloca);
-  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
-
-  // Create a block for execution after the loop
-  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
-  this->builder->SetInsertPoint(AfterLoopBB);
-
-  return arg1;
-}
-
-Value *LlvmCodegen::mulCodegen(Value *arg1, Value *arg2,
-                               unsigned long numElem) {
-  // Allocate space to store the value of the iterator
-  AllocaInst *alloca =
-      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(builder->getInt32(0), alloca);
-
-  // Add an explicit fall through to the loop body block
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateBr(LoopBB);
-  this->builder->SetInsertPoint(LoopBB);
-
-  // Use the iterator to fetch pointers to the current elems of the array
-  // being processed.
-  Value *currVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
-  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg1, {currVal});
-  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg2, {currVal});
-
-  // Load the elems of arrays, perform addition and store the result in the
-  // first array elem location.
-  Value *arg1Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
-  Value *arg2Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
-  Value *sumVal = this->builder->CreateFMul(arg1Val, arg2Val);
-  this->builder->CreateStore(sumVal, arg1Ptr);
-
-  // Increment the iterator and tests for the exit condition
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
-  this->builder->CreateStore(nextVal, alloca);
-  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
-
-  // Create a block for execution after the loop
-  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
-  this->builder->SetInsertPoint(AfterLoopBB);
-
-  return arg1;
-}
-
-Value *LlvmCodegen::divCodegen(Value *arg1, Value *arg2,
-                               unsigned long numElem) {
-  // Allocate space to store the value of the iterator
-  AllocaInst *alloca =
-      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(builder->getInt32(0), alloca);
-
-  // Add an explicit fall through to the loop body block
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateBr(LoopBB);
-  this->builder->SetInsertPoint(LoopBB);
-
-  // Use the iterator to fetch pointers to the current elems of the array
-  // being processed.
-  Value *currVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), alloca);
-  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg1, {currVal});
-  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg2, {currVal});
-
-  // Load the elems of arrays, perform addition and store the result in the
-  // first array elem location.
-  Value *arg1Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
-  Value *arg2Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
-  Value *sumVal = this->builder->CreateFDiv(arg1Val, arg2Val);
-  this->builder->CreateStore(sumVal, arg1Ptr);
-
-  // Increment the iterator and tests for the exit condition
-  Value *nextVal = this->builder->CreateAdd(currVal, builder->getInt32(1));
-  this->builder->CreateStore(nextVal, alloca);
-  Value *endCond = builder->CreateICmpULT(nextVal, builder->getInt32(numElem));
-
-  // Create a block for execution after the loop
-  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
-  this->builder->CreateCondBr(endCond, LoopBB, AfterLoopBB);
-  this->builder->SetInsertPoint(AfterLoopBB);
-
-  return arg1;
-}
-
 pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
 LlvmCodegen::getAndReinitializeContextAndModule() {
   auto prev_context = std::move(this->context);
@@ -288,7 +50,137 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 
-void LlvmCodegen::returnCodegen(Value *returnExpr) {
+pair<Value *, Value *> LlvmCodegen::allocHeap(int size) {
+  // Add the malloc function (if it doesnt exist).
+  FunctionCallee mallocFunc = this->module->getOrInsertFunction(
+      Constants::heapAllocFuncName, this->builder->getPtrTy(),
+      Type::getInt32Ty(*this->context));
+
+  uint64_t elementSize =
+      this->module->getDataLayout().getTypeAllocSize(this->builder->getPtrTy());
+
+  Value *totalSize =
+      ConstantInt::get(Type::getInt32Ty(*this->context), size * elementSize);
+
+  return make_pair(this->builder->CreateCall(mallocFunc, totalSize), totalSize);
+}
+
+RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
+  // Create a global variable with the literal constant value.
+  ArrayType *arrTy =
+      ArrayType::get(Type::getFloatTy(*this->context), vec.size());
+  Constant *init =
+      ConstantDataArray::get(*this->context, ArrayRef(vec.data(), vec.size()));
+  llvm::GlobalVariable *sourceGlobal = new llvm::GlobalVariable(
+      *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init);
+
+  // Get the size that needs to be reserved and reserve it.
+  auto [rawPtr, totalSize] = allocHeap(vec.size());
+
+  // Initiate a memcpy of the global constant into the reserved memory location.
+  this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
+                              MaybeAlign(0), totalSize);
+
+  // Get the size that needs to be reserved and reserve it.
+  auto [shapeRawPtr, shapeSize] = allocHeap(1);
+  builder->CreateStore(builder->getInt32(vec.size()), shapeRawPtr);
+
+  return RValue(rawPtr, shapeRawPtr,
+                ConstantInt::get(Type::getInt32Ty(*this->context), 1));
+}
+
+pair<BasicBlock *, Value *>
+LlvmCodegen::addLoopStart(Value *loopIterInitialValue) {
+  // Allocate space to store the value of the iterator
+  AllocaInst *alloca =
+      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
+  builder->CreateStore(loopIterInitialValue, alloca);
+
+  // Unconditional entry to loop block with builder set to insert instructions
+  // there
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *LoopBB = BasicBlock::Create(*this->context, "", func);
+  this->builder->CreateBr(LoopBB);
+  this->builder->SetInsertPoint(LoopBB);
+  return make_pair(LoopBB, alloca);
+}
+
+void LlvmCodegen::addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
+                             Value *loopIterFinalValue) {
+  Value *endCond = builder->CreateICmpULT(nextIterVal, loopIterFinalValue);
+
+  // Create a block for execution after the loop and test if the end condition
+  // is satisfied.
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *AfterLoopBB = BasicBlock::Create(*this->context, "", func);
+  this->builder->CreateCondBr(endCond, loopBB, AfterLoopBB);
+  this->builder->SetInsertPoint(AfterLoopBB);
+}
+
+RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
+  // TODO: test whether arg1.getShapeLength() == arg2.getShapeLength()
+  // TODO: test elementwise comparison of shape idxs for both args
+
+  // START SHAPE LOOP
+  // At this point we have verified that the two arguments are of the same shape
+  // We want to get a sum of all the elements that we need to operate on
+
+  AllocaInst *sumAlloca =
+      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
+  builder->CreateStore(this->builder->getInt32(1), sumAlloca);
+  auto [shapeLoopBB, shapeIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+  Value *shapeIterVal = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), shapeIterAlloca);
+
+  Value *shapePtr = this->builder->CreateGEP(
+      Type::getInt32Ty(*this->context), arg1.getShapePtr(), {shapeIterVal});
+  Value *shapeVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr);
+  Value *oldSumVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  Value *newSumVal = this->builder->CreateMul(oldSumVal, shapeVal);
+  builder->CreateStore(newSumVal, sumAlloca);
+
+  Value *nextShapeIterVal =
+      this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
+  this->addLoopEnd(shapeLoopBB, nextShapeIterVal, arg1.getShapeLength());
+  //   print("sumVal: %d", sumVal);
+  // END SHAPE LOOP
+
+  // START PROCESS LOOP
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1.getResultPtr(), {iterVal});
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2.getResultPtr(), {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+  Value *arg2Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
+  Value *processSumVal = this->builder->CreateFAdd(arg1Val, arg2Val);
+  this->builder->CreateStore(processSumVal, arg1Ptr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  //   print("nextIterVal: %d", nextIterVal);
+  //   print("sumVal: %d", sumVal);
+
+  Value *sumVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  print("sumVal: %d", sumVal);
+  this->addLoopEnd(shapeLoopBB, nextIterVal, sumVal);
+  // END PROCESS LOOP
+
+  return RValue(arg1.getResultPtr(), arg1.getShapePtr(), arg1.getShapeLength());
+}
+
+void LlvmCodegen::print(string fmt, Value *val) {
   // 1. Define the return type (int)
   Type *intType = Type::getInt32Ty(*this->context);
 
@@ -304,15 +196,16 @@ void LlvmCodegen::returnCodegen(Value *returnExpr) {
       this->module->getOrInsertFunction("printf", printfType);
 
   // Create the format string constant (e.g., "Hello %d\n")
-  Value *formatStr = this->builder->CreateGlobalString("Value: %f\n");
+  Value *formatStr = this->builder->CreateGlobalString(fmt);
 
   // Prepare the arguments (format string + values to print)
-  std::vector<Value *> printfArgs = {
-      formatStr, ConstantFP::get(*this->context, APFloat(1.0))};
+  std::vector<Value *> printfArgs = {formatStr, val};
 
   // Emit the call instruction
   this->builder->CreateCall(printfFn, printfArgs, "printfCall");
+}
 
+void LlvmCodegen::returnCodegen(Value *returnExpr) {
   this->builder->CreateRet(returnExpr);
 }
 } // namespace AplCodegen

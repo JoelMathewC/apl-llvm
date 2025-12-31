@@ -9,12 +9,23 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
+class RValue {
+  Value *resultPtr;
+  Value *shapePtr;
+  Value *shapeLength;
+
+public:
+  RValue(Value *resultPtr, Value *shapePtr, Value *shapeLength);
+  Value *getResultPtr();
+  Value *getShapePtr();
+  Value *getShapeLength();
+};
+
 class LlvmCodegen {
   unique_ptr<LLVMContext> context;
   unique_ptr<Module> module;
   unique_ptr<IRBuilder<>> builder;
   DataLayout dataLayout;
-  map<string, Value *> variableMap;
 
   void initializeContextAndModule();
 
@@ -24,14 +35,24 @@ public:
 
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
+
+  pair<Value *, Value *> allocHeap(int size);
+
+  void print(string fmt, Value* val);
+
   void returnCodegen(Value *returnExpr);
-  Value *literalCodegen(const vector<float> vec);
+  RValue literalCodegen(const vector<float> vec);
 
-  Value *negateCodegen(Value *arg, unsigned long numElem);
+  // RValue negateCodegen(RValue arg);
 
-  Value *addCodegen(Value *arg1, Value *arg2, unsigned long numElem);
-  Value *subCodegen(Value *arg1, Value *arg2, unsigned long numElem);
-  Value *mulCodegen(Value *arg1, Value *arg2, unsigned long numElem);
-  Value *divCodegen(Value *arg1, Value *arg2, unsigned long numElem);
+  pair<BasicBlock *, Value *>
+  addLoopStart(Value *loopIterInitialValue);
+  void addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
+                  Value *loopIterFinalValue);
+
+  RValue addCodegen(RValue arg1, RValue arg2);
+  // RValue subCodegen(RValue arg1, RValue arg2);
+  // RValue mulCodegen(RValue arg1, RValue arg2);
+  // RValue divCodegen(RValue arg1, RValue arg2);
 };
 } // namespace AplCodegen

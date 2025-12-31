@@ -41,6 +41,7 @@ public:
   static unique_ptr<JITCompiler> create();
   const DataLayout &getDataLayout() const;
   JITDylib &getMainJITDylib();
-  Constants::CompilerFunc compile(AplCodegen::LlvmCodegen *codegenManager, Value* returnExpr);
+  Constants::CompilerFunc compile(AplCodegen::LlvmCodegen *codegenManager,
+                                  AplCodegen::RValue returnExpr);
 };
 } // namespace AplCompiler
