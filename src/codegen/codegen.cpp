@@ -173,8 +173,8 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
 
   Value *sumVal =
       this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
-  print("sumVal: %d", sumVal);
-  this->addLoopEnd(shapeLoopBB, nextIterVal, sumVal);
+  this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
+
   // END PROCESS LOOP
 
   return RValue(arg1.getResultPtr(), arg1.getShapePtr(), arg1.getShapeLength());
