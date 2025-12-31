@@ -19,28 +19,6 @@
 
 using namespace std;
 
-void printResult(float *res, vector<unsigned long> shape) {
-  string shapeStr = "";
-  for (int i = 0; i < shape.size(); ++i) {
-    if (i == 0)
-      shapeStr.append(to_string(shape[i]));
-    else
-      shapeStr.append(to_string(shape[i]) + "x");
-  }
-  cout << "<" << shapeStr << "> [";
-
-  unsigned long totalElem = 1;
-  for (auto idx : shape)
-    totalElem *= idx;
-
-  for (int i = 0; i < totalElem; ++i) {
-    if (i > 0)
-      cout << " ";
-    cout << *(res + i);
-  }
-  cout << "]\n";
-}
-
 int main() {
   cout << "\033[32m=== APL REPL v0.1 ===\033[0m\n";
   cout << "Type \"quit()\" to exit this program\n";

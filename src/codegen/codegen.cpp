@@ -245,6 +245,7 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
   Value *arg1Val =
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
 
+  // https://stackoverflow.com/questions/63144506/printf-doesnt-work-for-floats-in-llvm-ir/63156309#63156309
   print("%.2f ",
         this->builder->CreateFPExt(arg1Val, this->builder->getDoubleTy()));
 
@@ -253,7 +254,7 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
   this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
 
   print("]\n");
-  this->builder->CreateRet(returnExpr.getResultPtr());
+  this->builder->CreateRet(nullptr);
 }
 
 void LlvmCodegen::returnCodegen(Value *returnExpr) {
