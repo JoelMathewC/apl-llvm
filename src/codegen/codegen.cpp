@@ -122,13 +122,57 @@ void LlvmCodegen::addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
 }
 
 RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
-  // TODO: test whether arg1.getShapeLength() == arg2.getShapeLength()
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  Value *verifyCond =
+      builder->CreateICmpEQ(arg1.getShapeLength(), arg2.getShapeLength());
+  BasicBlock *AfterVerifyBB = BasicBlock::Create(*this->context, "", func);
+  BasicBlock *RemainingBB = BasicBlock::Create(*this->context, "", func);
+  // TODO: swap back
+  this->builder->CreateCondBr(verifyCond, AfterVerifyBB, RemainingBB);
+
+  this->builder->SetInsertPoint(AfterVerifyBB);
+
+  Type *RetType = PointerType::getUnqual(*this->context);
+  Type *ArgType = Type::getInt64Ty(*this->context);
+  auto allocExceptionFunc = this->module->getOrInsertFunction(
+      "__cxa_allocate_exception", RetType, ArgType);
+
+  Type *VoidTy = Type::getVoidTy(*this->context);
+  Type *PtrTy = PointerType::getUnqual(*this->context);
+  auto throwFunc = this->module->getOrInsertFunction("__cxa_throw", VoidTy,
+                                                     PtrTy, PtrTy, PtrTy);
+
+  Value *ExPtr = this->builder->CreateCall(
+      allocExceptionFunc,
+      {ConstantInt::get(Type::getInt64Ty(*this->context), 4)});
+
+  Value *IntPtr =
+      this->builder->CreateBitCast(ExPtr, Type::getInt32Ty(*this->context));
+  this->builder->CreateStore(
+      ConstantInt::get(Type::getInt32Ty(*this->context), -1), IntPtr);
+
+  // 3. Define TypeInfo (External constant for 'int')
+  GlobalVariable *TypeInfo =
+      new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
+                         GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
+
+  // 4. Call __cxa_throw(exception_ptr, type_info, destructor)
+  Value *NullPtr = ConstantPointerNull::get(builder->getPtrTy());
+  builder->CreateCall(
+      throwFunc,
+      {ExPtr,
+       this->builder->CreateBitCast(TypeInfo, Type::getInt8Ty(*this->context)),
+       NullPtr});
+
+  this->builder->CreateUnreachable(); // __cxa_throw never returns
+
   // TODO: test elementwise comparison of shape idxs for both args
 
   // START SHAPE LOOP
   // At this point we have verified that the two arguments are of the same shape
   // We want to get a sum of all the elements that we need to operate on
 
+  this->builder->SetInsertPoint(RemainingBB);
   AllocaInst *sumAlloca =
       this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
   builder->CreateStore(this->builder->getInt32(1), sumAlloca);
