@@ -186,7 +186,7 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
 }
 
-void LlvmCodegen::print(string fmt, Value *val) {
+void LlvmCodegen::print(string fmt, Value *val = nullptr) {
   Type *intType = Type::getInt32Ty(*this->context);
   Type *charPtrType = PointerType::getUnqual(Type::getInt8Ty(*this->context));
   FunctionType *printfType = FunctionType::get(intType, {charPtrType}, true);
@@ -194,8 +194,62 @@ void LlvmCodegen::print(string fmt, Value *val) {
       this->module->getOrInsertFunction("printf", printfType);
 
   Value *formatStr = this->builder->CreateGlobalString(fmt);
-  std::vector<Value *> printfArgs = {formatStr, val};
+  std::vector<Value *> printfArgs = {formatStr};
+
+  if (val != nullptr)
+    printfArgs.push_back(val);
   this->builder->CreateCall(printfFn, printfArgs, "printfCall");
+}
+
+void LlvmCodegen::printResultCodegen(RValue returnExpr) {
+  print("<");
+
+  AllocaInst *sumAlloca =
+      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
+  builder->CreateStore(this->builder->getInt32(1), sumAlloca);
+  auto [shapeLoopBB, shapeIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+  Value *shapeIterVal = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), shapeIterAlloca);
+
+  Value *shapePtr =
+      this->builder->CreateGEP(Type::getInt32Ty(*this->context),
+                               returnExpr.getShapePtr(), {shapeIterVal});
+  Value *shapeVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr);
+  Value *oldSumVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  Value *newSumVal = this->builder->CreateMul(oldSumVal, shapeVal);
+  builder->CreateStore(newSumVal, sumAlloca);
+
+  print("%dx", shapeVal);
+
+  Value *nextShapeIterVal =
+      this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
+  this->addLoopEnd(shapeLoopBB, nextShapeIterVal, returnExpr.getShapeLength());
+
+  print("> [");
+
+  Value *sumVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+  Value *arg1Ptr = this->builder->CreateGEP(
+      Type::getFloatTy(*this->context), returnExpr.getResultPtr(), {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+
+  print("%f ", arg1Val);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
+
+  print("]");
+  this->builder->CreateRet(returnExpr.getResultPtr());
 }
 
 void LlvmCodegen::returnCodegen(Value *returnExpr) {

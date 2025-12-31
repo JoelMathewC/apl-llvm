@@ -39,6 +39,7 @@ public:
   pair<Value *, Value *> allocHeap(Value *size);
 
   void print(string fmt, Value *val);
+  void printResultCodegen(RValue returnExpr);
 
   void returnCodegen(Value *returnExpr);
   RValue literalCodegen(const vector<float> vec);

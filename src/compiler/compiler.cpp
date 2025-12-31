@@ -88,7 +88,7 @@ JITCompiler::compile(AplCodegen::LlvmCodegen *codegenManager,
     Error error1 = this->rt->remove();
   this->rt = this->mainJD.getDefaultResourceTracker();
 
-  codegenManager->returnCodegen(returnExpr.getResultPtr());
+  codegenManager->printResultCodegen(returnExpr);
   auto [context, module] = codegenManager->getAndReinitializeContextAndModule();
   module->print(errs(), nullptr);
 

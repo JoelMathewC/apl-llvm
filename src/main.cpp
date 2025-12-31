@@ -62,8 +62,8 @@ int main() {
     parser();
     auto llvmIr = astRetPtr->codegen(codegenManager.get());
     auto compiledFunc = jit->compile(codegenManager.get(), llvmIr);
-    auto *res = compiledFunc();
-    printResult(res, astRetPtr->getShape());
+    compiledFunc();
+    // printResult(res, astRetPtr->getShape());
   }
 
   return 0;
