@@ -63,7 +63,6 @@ int main() {
     auto llvmIr = astRetPtr->codegen(codegenManager.get());
     auto compiledFunc = jit->compile(codegenManager.get(), llvmIr);
     compiledFunc();
-    // printResult(res, astRetPtr->getShape());
   }
 
   return 0;

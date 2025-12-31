@@ -50,14 +50,14 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 
-pair<Value *, Value *> LlvmCodegen::allocHeap(Value *size) {
+pair<Value *, Value *> LlvmCodegen::allocHeap(Value *size, Type *elemType) {
   // Add the malloc function (if it doesnt exist).
   FunctionCallee mallocFunc = this->module->getOrInsertFunction(
       Constants::heapAllocFuncName, this->builder->getPtrTy(),
       Type::getInt32Ty(*this->context));
 
   uint64_t elementSize =
-      this->module->getDataLayout().getTypeAllocSize(this->builder->getPtrTy());
+      this->module->getDataLayout().getTypeAllocSize(elemType);
 
   Value *totalSize = builder->CreateMul(
       ConstantInt::get(Type::getInt32Ty(*this->context), elementSize), size);
@@ -76,7 +76,8 @@ RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
 
   // Get the size that needs to be reserved and reserve it.
   auto [rawPtr, totalSize] =
-      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), vec.size()));
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), vec.size()),
+                this->builder->getFloatTy());
 
   // Initiate a memcpy of the global constant into the reserved memory location.
   this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
@@ -84,7 +85,8 @@ RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
 
   // Get the size that needs to be reserved and reserve it.
   auto [shapeRawPtr, shapeSize] =
-      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1));
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1),
+                this->builder->getInt32Ty());
   builder->CreateStore(builder->getInt32(vec.size()), shapeRawPtr);
 
   return RValue(rawPtr, shapeRawPtr,
@@ -154,7 +156,8 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   // START PROCESS LOOP
   Value *sumVal =
       this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
-  auto [resultBasePtr, resultSize] = allocHeap(sumVal);
+  auto [resultBasePtr, resultSize] =
+      allocHeap(sumVal, this->builder->getFloatTy());
 
   auto [processLoopBB, processIterAlloca] =
       this->addLoopStart(this->builder->getInt32(0));
@@ -242,13 +245,14 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
   Value *arg1Val =
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
 
-  print("%f ", arg1Val);
+  print("%.2f ",
+        this->builder->CreateFPExt(arg1Val, this->builder->getDoubleTy()));
 
   Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
   this->builder->CreateStore(nextIterVal, processIterAlloca);
   this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
 
-  print("]");
+  print("]\n");
   this->builder->CreateRet(returnExpr.getResultPtr());
 }
 

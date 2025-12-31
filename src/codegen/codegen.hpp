@@ -36,7 +36,7 @@ public:
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
 
-  pair<Value *, Value *> allocHeap(Value *size);
+  pair<Value *, Value *> allocHeap(Value *size, Type* elemType);
 
   void print(string fmt, Value *val);
   void printResultCodegen(RValue returnExpr);
