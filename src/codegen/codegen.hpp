@@ -36,17 +36,16 @@ public:
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
 
-  pair<Value *, Value *> allocHeap(int size);
+  pair<Value *, Value *> allocHeap(Value *size);
 
-  void print(string fmt, Value* val);
+  void print(string fmt, Value *val);
 
   void returnCodegen(Value *returnExpr);
   RValue literalCodegen(const vector<float> vec);
 
   // RValue negateCodegen(RValue arg);
 
-  pair<BasicBlock *, Value *>
-  addLoopStart(Value *loopIterInitialValue);
+  pair<BasicBlock *, Value *> addLoopStart(Value *loopIterInitialValue);
   void addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
                   Value *loopIterFinalValue);
 

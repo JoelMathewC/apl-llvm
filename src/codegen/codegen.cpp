@@ -50,7 +50,7 @@ LlvmCodegen::getAndReinitializeContextAndModule() {
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 
-pair<Value *, Value *> LlvmCodegen::allocHeap(int size) {
+pair<Value *, Value *> LlvmCodegen::allocHeap(Value *size) {
   // Add the malloc function (if it doesnt exist).
   FunctionCallee mallocFunc = this->module->getOrInsertFunction(
       Constants::heapAllocFuncName, this->builder->getPtrTy(),
@@ -59,8 +59,8 @@ pair<Value *, Value *> LlvmCodegen::allocHeap(int size) {
   uint64_t elementSize =
       this->module->getDataLayout().getTypeAllocSize(this->builder->getPtrTy());
 
-  Value *totalSize =
-      ConstantInt::get(Type::getInt32Ty(*this->context), size * elementSize);
+  Value *totalSize = builder->CreateMul(
+      ConstantInt::get(Type::getInt32Ty(*this->context), elementSize), size);
 
   return make_pair(this->builder->CreateCall(mallocFunc, totalSize), totalSize);
 }
@@ -75,14 +75,16 @@ RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
       *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init);
 
   // Get the size that needs to be reserved and reserve it.
-  auto [rawPtr, totalSize] = allocHeap(vec.size());
+  auto [rawPtr, totalSize] =
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), vec.size()));
 
   // Initiate a memcpy of the global constant into the reserved memory location.
   this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
                               MaybeAlign(0), totalSize);
 
   // Get the size that needs to be reserved and reserve it.
-  auto [shapeRawPtr, shapeSize] = allocHeap(1);
+  auto [shapeRawPtr, shapeSize] =
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1));
   builder->CreateStore(builder->getInt32(vec.size()), shapeRawPtr);
 
   return RValue(rawPtr, shapeRawPtr,
@@ -150,6 +152,10 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   // END SHAPE LOOP
 
   // START PROCESS LOOP
+  Value *sumVal =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  auto [resultBasePtr, resultSize] = allocHeap(sumVal);
+
   auto [processLoopBB, processIterAlloca] =
       this->addLoopStart(this->builder->getInt32(0));
   Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
@@ -159,49 +165,36 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
                                             arg1.getResultPtr(), {iterVal});
   Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
                                             arg2.getResultPtr(), {iterVal});
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
   Value *arg1Val =
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
   Value *arg2Val =
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
   Value *processSumVal = this->builder->CreateFAdd(arg1Val, arg2Val);
-  this->builder->CreateStore(processSumVal, arg1Ptr);
+  this->builder->CreateStore(processSumVal, resultPtr);
 
   Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
   this->builder->CreateStore(nextIterVal, processIterAlloca);
   //   print("nextIterVal: %d", nextIterVal);
   //   print("sumVal: %d", sumVal);
 
-  Value *sumVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
   this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
 
   // END PROCESS LOOP
 
-  return RValue(arg1.getResultPtr(), arg1.getShapePtr(), arg1.getShapeLength());
+  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
 }
 
 void LlvmCodegen::print(string fmt, Value *val) {
-  // 1. Define the return type (int)
   Type *intType = Type::getInt32Ty(*this->context);
-
-  // 2. Define the first argument type (char*)
   Type *charPtrType = PointerType::getUnqual(Type::getInt8Ty(*this->context));
-
-  // 3. Create the function signature: int printf(char*, ...)
-  // The 'true' parameter indicates it is a variadic function
   FunctionType *printfType = FunctionType::get(intType, {charPtrType}, true);
-
-  // 4. Get or Insert the function into the module
   FunctionCallee printfFn =
       this->module->getOrInsertFunction("printf", printfType);
 
-  // Create the format string constant (e.g., "Hello %d\n")
   Value *formatStr = this->builder->CreateGlobalString(fmt);
-
-  // Prepare the arguments (format string + values to print)
   std::vector<Value *> printfArgs = {formatStr, val};
-
-  // Emit the call instruction
   this->builder->CreateCall(printfFn, printfArgs, "printfCall");
 }
 
