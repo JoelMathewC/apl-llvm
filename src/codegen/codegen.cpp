@@ -127,8 +127,9 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
       builder->CreateICmpEQ(arg1.getShapeLength(), arg2.getShapeLength());
   BasicBlock *AfterVerifyBB = BasicBlock::Create(*this->context, "", func);
   BasicBlock *RemainingBB = BasicBlock::Create(*this->context, "", func);
+
   // TODO: swap back
-  this->builder->CreateCondBr(verifyCond, AfterVerifyBB, RemainingBB);
+  this->builder->CreateCondBr(verifyCond, RemainingBB, AfterVerifyBB);
 
   this->builder->SetInsertPoint(AfterVerifyBB);
 
@@ -149,7 +150,7 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   Value *IntPtr =
       this->builder->CreateBitCast(ExPtr, Type::getInt32Ty(*this->context));
   this->builder->CreateStore(
-      ConstantInt::get(Type::getInt32Ty(*this->context), -1), IntPtr);
+      ConstantInt::get(Type::getInt32Ty(*this->context), 1), ExPtr);
 
   // 3. Define TypeInfo (External constant for 'int')
   GlobalVariable *TypeInfo =
@@ -158,11 +159,7 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
 
   // 4. Call __cxa_throw(exception_ptr, type_info, destructor)
   Value *NullPtr = ConstantPointerNull::get(builder->getPtrTy());
-  builder->CreateCall(
-      throwFunc,
-      {ExPtr,
-       this->builder->CreateBitCast(TypeInfo, Type::getInt8Ty(*this->context)),
-       NullPtr});
+  builder->CreateCall(throwFunc, {ExPtr, TypeInfo, NullPtr});
 
   this->builder->CreateUnreachable(); // __cxa_throw never returns
 
