@@ -26,6 +26,7 @@ class LlvmCodegen {
   unique_ptr<Module> module;
   unique_ptr<IRBuilder<>> builder;
   DataLayout dataLayout;
+  GlobalVariable *typeInfo;
 
   void initializeContextAndModule();
 
@@ -46,7 +47,7 @@ public:
   void addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
                   Value *loopIterFinalValue);
   Value *sumArrShape(RValue arg);
-  void verifyDyadicOperands(RValue arg1, RValue arg2, BasicBlock* remainingBB);
+  void verifyDyadicOperands(RValue arg1, RValue arg2);
   void printResultCodegen(RValue returnExpr);
 
   // Codegen function

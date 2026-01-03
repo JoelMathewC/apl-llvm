@@ -92,9 +92,6 @@ unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op,
                                           unique_ptr<Node> &arg1,
                                           unique_ptr<Node> &arg2) {
   auto dyadicOp = AplOp::createDyadicOp(op);
-  if (!dyadicOp->isOperandShapeCorrect(arg1->getShape(), arg2->getShape())) {
-    throw std::invalid_argument("Syntax Error: mismatched argument shapes!");
-  }
   return make_unique<DyadicCall>(std::move(dyadicOp), std::move(arg1),
                                  std::move(arg2));
 }

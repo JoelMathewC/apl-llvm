@@ -33,6 +33,10 @@ void LlvmCodegen::initializeContextAndModule() {
   this->module->setDataLayout(this->dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 
+  this->typeInfo =
+      new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
+                         GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
+
   // Define a function and set the builders insertion point to be a basic
   // block in the function.
   FunctionType *FT = FunctionType::get(this->builder->getPtrTy(),
@@ -101,12 +105,13 @@ void LlvmCodegen::throwError() {
   this->builder->CreateStore(
       ConstantInt::get(Type::getInt32Ty(*this->context), 1), ExPtr);
 
-  GlobalVariable *TypeInfo =
-      new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
-                         GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
+  //   GlobalVariable *TypeInfo =
+  //       new GlobalVariable(*this->module, Type::getInt8Ty(*this->context),
+  //       true,
+  //                          GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
 
   Value *NullPtr = ConstantPointerNull::get(builder->getPtrTy());
-  builder->CreateCall(throwFunc, {ExPtr, TypeInfo, NullPtr});
+  builder->CreateCall(throwFunc, {ExPtr, this->typeInfo, NullPtr});
   this->builder->CreateUnreachable();
 }
 
@@ -176,8 +181,7 @@ Value *LlvmCodegen::sumArrShape(RValue arg) {
   return newTotalElemCount;
 }
 
-void LlvmCodegen::verifyDyadicOperands(RValue arg1, RValue arg2,
-                                       BasicBlock *remainingBB) {
+void LlvmCodegen::verifyDyadicOperands(RValue arg1, RValue arg2) {
   Function *func = this->builder->GetInsertBlock()->getParent();
   BasicBlock *ShapeSizeVerifyFailedBB =
       BasicBlock::Create(*this->context, "", func);
@@ -332,12 +336,9 @@ RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
 
 RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   // Verify that the operands are of the right size
-  BasicBlock *RemainingBB = BasicBlock::Create(
-      *this->context, "", this->builder->GetInsertBlock()->getParent());
-  verifyDyadicOperands(arg1, arg2, RemainingBB);
+  verifyDyadicOperands(arg1, arg2);
 
   // Allocate space for the result
-  this->builder->SetInsertPoint(RemainingBB);
   Value *totalElemCount = sumArrShape(arg1);
 
   auto [resultBasePtr, resultSize] =
