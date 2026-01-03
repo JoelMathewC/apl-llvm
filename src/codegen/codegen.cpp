@@ -33,6 +33,7 @@ void LlvmCodegen::initializeContextAndModule() {
   this->module->setDataLayout(this->dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 
+  // TODO: improve how this is done
   this->typeInfo =
       new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
                          GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
@@ -334,6 +335,34 @@ RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
                 ConstantInt::get(Type::getInt32Ty(*this->context), 1));
 }
 
+RValue LlvmCodegen::negateCodegen(RValue arg) {
+  // Allocate space for the result
+  Value *totalElemCount = sumArrShape(arg);
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *argPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                           arg.getResultPtr(), {iterVal});
+
+  Value *argVal =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), argPtr);
+
+  Value *processVal = this->builder->CreateFSub(
+      ConstantFP::get(*this->context, APFloat((float)0)), argVal);
+  this->builder->CreateStore(processVal, argPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
+
+  return arg;
+}
+
 RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   // Verify that the operands are of the right size
   verifyDyadicOperands(arg1, arg2);
@@ -366,6 +395,129 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
 
   Value *processVal = this->builder->CreateFAdd(arg1Val, arg2Val);
+  this->builder->CreateStore(processVal, resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
+
+  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
+}
+
+RValue LlvmCodegen::subCodegen(RValue arg1, RValue arg2) {
+  // Verify that the operands are of the right size
+  verifyDyadicOperands(arg1, arg2);
+
+  // Allocate space for the result
+  Value *totalElemCount = sumArrShape(arg1);
+
+  auto [resultBasePtr, resultSize] =
+      allocHeap(totalElemCount, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1.getResultPtr(), {iterVal});
+
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2.getResultPtr(), {iterVal});
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+
+  Value *arg2Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
+
+  Value *processVal = this->builder->CreateFSub(arg1Val, arg2Val);
+  this->builder->CreateStore(processVal, resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
+
+  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
+}
+
+RValue LlvmCodegen::mulCodegen(RValue arg1, RValue arg2) {
+  // Verify that the operands are of the right size
+  verifyDyadicOperands(arg1, arg2);
+
+  // Allocate space for the result
+  Value *totalElemCount = sumArrShape(arg1);
+
+  auto [resultBasePtr, resultSize] =
+      allocHeap(totalElemCount, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1.getResultPtr(), {iterVal});
+
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2.getResultPtr(), {iterVal});
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+
+  Value *arg2Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
+
+  Value *processVal = this->builder->CreateFMul(arg1Val, arg2Val);
+  this->builder->CreateStore(processVal, resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
+
+  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
+}
+
+RValue LlvmCodegen::divCodegen(RValue arg1, RValue arg2) {
+  // Verify that the operands are of the right size
+  verifyDyadicOperands(arg1, arg2);
+
+  // Allocate space for the result
+  Value *totalElemCount = sumArrShape(arg1);
+
+  auto [resultBasePtr, resultSize] =
+      allocHeap(totalElemCount, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1.getResultPtr(), {iterVal});
+
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2.getResultPtr(), {iterVal});
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+
+  Value *arg2Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
+
+  Value *processVal = this->builder->CreateFDiv(arg1Val, arg2Val);
   this->builder->CreateStore(processVal, resultPtr);
 
   Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));

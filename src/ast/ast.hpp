@@ -17,15 +17,9 @@ using namespace std;
 namespace AplAst {
 // Abstract class for nodes in APL AST that evaluate to expressions
 class Node {
-protected:
-  const vector<unsigned long> shape;
-  Node(const vector<unsigned long> shape);
-
 public:
   virtual AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager);
-  const vector<unsigned long> getShape();
   virtual const string print() const;
-  virtual ~Node();
 };
 
 // Literal node in the APL AST

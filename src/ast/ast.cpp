@@ -12,13 +12,6 @@
 using namespace std;
 
 namespace AplAst {
-// Node section
-Node::Node(const vector<unsigned long> shape) : shape(shape) {}
-
-Node::~Node() = default;
-
-const vector<unsigned long> Node::getShape() { return this->shape; }
-
 AplCodegen::RValue Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
   return AplCodegen::RValue(nullptr, nullptr, nullptr);
 }
@@ -27,8 +20,7 @@ const string Node::print() const { return "unspecialized-node"; }
 // End Node Section
 
 // Literal section
-Literal::Literal(const vector<float> val)
-    : val(val), Node(vector<unsigned long>{val.size()}) {}
+Literal::Literal(const vector<float> val) : val(val) {}
 
 unique_ptr<Literal> Literal::create(float val) {
   vector<float> vec = {val};
@@ -63,8 +55,7 @@ const string Literal::print() const {
 
 // MonadicCall section
 MonadicCall::MonadicCall(unique_ptr<AplOp::MonadicOp> op, unique_ptr<Node> arg)
-    : Node(op->getResultShape(arg->getShape())), op(std::move(op)),
-      arg(std::move(arg)) {}
+    : op(std::move(op)), arg(std::move(arg)) {}
 
 unique_ptr<MonadicCall> MonadicCall::create(AplOp::Symbol op,
                                             unique_ptr<Node> &arg) {
@@ -85,8 +76,7 @@ const string MonadicCall::print() const {
 // DyadicCall section
 DyadicCall::DyadicCall(unique_ptr<AplOp::DyadicOp> op, unique_ptr<Node> arg1,
                        unique_ptr<Node> arg2)
-    : Node(op->getResultShape(arg1->getShape(), arg2->getShape())),
-      op(std::move(op)), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
+    : op(std::move(op)), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
 unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op,
                                           unique_ptr<Node> &arg1,

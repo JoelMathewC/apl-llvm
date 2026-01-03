@@ -50,12 +50,16 @@ public:
   void verifyDyadicOperands(RValue arg1, RValue arg2);
   void printResultCodegen(RValue returnExpr);
 
-  // Codegen function
+  // Node-based codegen functions
   RValue literalCodegen(const vector<float> vec);
+
+  // Monadic codegen functions
+  RValue negateCodegen(RValue arg);
+
+  // Dyadic codegen functions
   RValue addCodegen(RValue arg1, RValue arg2);
-  // RValue negateCodegen(RValue arg);
-  // RValue subCodegen(RValue arg1, RValue arg2);
-  // RValue mulCodegen(RValue arg1, RValue arg2);
-  // RValue divCodegen(RValue arg1, RValue arg2);
+  RValue subCodegen(RValue arg1, RValue arg2);
+  RValue mulCodegen(RValue arg1, RValue arg2);
+  RValue divCodegen(RValue arg1, RValue arg2);
 };
 } // namespace AplCodegen
