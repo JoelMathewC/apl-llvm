@@ -268,7 +268,7 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
 
   builder->CreateStore(newTotalElemCount, totalElemCountAlloca);
 
-  print("%dx", shapeVal);
+  print("%d,", shapeVal);
 
   Value *nextShapeIterVal =
       this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
@@ -278,7 +278,7 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
   this->addLoopEnd(shapeLoopBB, nextShapeIterVal, returnExpr.getShapeLength());
   // end Loop 1
 
-  print("> [");
+  print("> [ ");
 
   // Loop 2: Loop through the array and print individual values
   auto [processLoopBB, processIterAlloca] =
