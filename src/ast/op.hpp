@@ -8,7 +8,7 @@ using namespace std;
 using namespace llvm;
 
 namespace AplOp {
-enum Symbol { PLUS, MINUS, TIMES, DIVIDE };
+enum Symbol { PLUS, MINUS, TIMES, DIVIDE, IOTA };
 
 class Op {
 public:
@@ -23,6 +23,13 @@ public:
 };
 
 class NegateOp : public MonadicOp {
+public:
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
+                             AplCodegen::RValue operand) override;
+  const string print() const override;
+};
+
+class IndexGenOp : public MonadicOp {
 public:
   AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
                              AplCodegen::RValue operand) override;

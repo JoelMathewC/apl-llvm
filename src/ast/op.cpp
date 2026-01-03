@@ -24,6 +24,11 @@ AplCodegen::RValue NegateOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
                                      AplCodegen::RValue operand) {
   return codegenManager->negateCodegen(operand);
 }
+
+AplCodegen::RValue IndexGenOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                       AplCodegen::RValue operand) {
+  return codegenManager->indexGenCodegen(operand);
+}
 // endregion MonadicOp
 
 // region DyadicOp
@@ -78,6 +83,8 @@ unique_ptr<AplOp::MonadicOp> createMonadicOp(Symbol op) {
   switch (op) {
   case Symbol::MINUS:
     return make_unique<AplOp::NegateOp>();
+  case Symbol::IOTA:
+    return make_unique<AplOp::IndexGenOp>();
   default:
     throw std::logic_error("Specified monadic operation is unimplemented!");
   }
@@ -86,6 +93,7 @@ unique_ptr<AplOp::MonadicOp> createMonadicOp(Symbol op) {
 
 const string Op::print() const { return "unspecified-op"; }
 const string NegateOp::print() const { return "-"; }
+const string IndexGenOp::print() const { return "⍳"; }
 const string AddOp::print() const { return "+"; }
 const string SubOp::print() const { return "-"; }
 const string MulOp::print() const { return "x"; }

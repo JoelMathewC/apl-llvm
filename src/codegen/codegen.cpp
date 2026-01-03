@@ -363,6 +363,77 @@ RValue LlvmCodegen::negateCodegen(RValue arg) {
   return arg;
 }
 
+RValue LlvmCodegen::indexGenCodegen(RValue arg) {
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *ShapeSizeVerifyFailedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeSizeVerifyPassedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeValVerifyFailedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeValVerifyPassedBB =
+      BasicBlock::Create(*this->context, "", func);
+
+  Value *verifyCond1 =
+      builder->CreateICmpEQ(arg.getShapeLength(), builder->getInt32(1));
+
+  this->builder->CreateCondBr(verifyCond1, ShapeSizeVerifyPassedBB,
+                              ShapeSizeVerifyFailedBB);
+
+  // Shape Size Verify Failed
+  this->builder->SetInsertPoint(ShapeSizeVerifyFailedBB);
+  throwError();
+
+  // Shape Size Verify Passed
+  this->builder->SetInsertPoint(ShapeSizeVerifyPassedBB);
+  Value *shapeVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                              arg.getShapePtr());
+  Value *verifyCond2 = builder->CreateICmpEQ(shapeVal, builder->getInt32(1));
+  this->builder->CreateCondBr(verifyCond1, ShapeValVerifyPassedBB,
+                              ShapeValVerifyFailedBB);
+
+  // Shape Size Verify Failed
+  this->builder->SetInsertPoint(ShapeValVerifyFailedBB);
+  throwError();
+
+  this->builder->SetInsertPoint(ShapeValVerifyPassedBB);
+  Value *argVal = this->builder->CreateLoad(Type::getFloatTy(*this->context),
+                                            arg.getResultPtr());
+
+  argVal =
+      this->builder->CreateFPToSI(argVal, Type::getInt32Ty(*this->context));
+
+  // Reserve space for the result
+  auto [shapeRawPtr, shapeSize] =
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1),
+                this->builder->getInt32Ty());
+
+  builder->CreateStore(argVal, shapeRawPtr);
+
+  auto [resultBasePtr, resultSize] =
+      allocHeap(argVal, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+
+  Value *processVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(
+      builder->CreateSIToFP(processVal, builder->getFloatTy()), resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, argVal);
+
+  return RValue(resultBasePtr, shapeRawPtr, builder->getInt32(1));
+}
+
 RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   // Verify that the operands are of the right size
   verifyDyadicOperands(arg1, arg2);
@@ -401,6 +472,7 @@ RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
   this->builder->CreateStore(nextIterVal, processIterAlloca);
   this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
 
+  // TODO: here and everywhere else set the getShapePtr to a new value
   return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
 }
 

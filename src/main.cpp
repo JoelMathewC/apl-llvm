@@ -44,7 +44,7 @@ int main() {
     try {
       compiledFunc();
     } catch (...) {
-      cout << "Syntax Error!\n";
+      cout << "Error!\n";
     }
   }
 

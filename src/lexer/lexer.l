@@ -36,6 +36,7 @@ without context so we differ the distinction to the parser.
 "-"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::MINUS); return token::OPERATOR;}
 "x"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::TIMES); return token::OPERATOR;}
 "÷"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::DIVIDE); return token::OPERATOR;}
+"⍳"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::IOTA); return token::OPERATOR;}
 
 "¯"         {return token::HIGH_MINUS;}
 [0-9]+(\.[0-9]+)?   {yylval->emplace<float>(std::stod(yytext)); return token::LITERAL;}

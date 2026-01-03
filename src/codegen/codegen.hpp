@@ -55,6 +55,7 @@ public:
 
   // Monadic codegen functions
   RValue negateCodegen(RValue arg);
+  RValue indexGenCodegen(RValue arg);
 
   // Dyadic codegen functions
   RValue addCodegen(RValue arg1, RValue arg2);
