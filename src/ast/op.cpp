@@ -61,6 +61,12 @@ AplCodegen::RValue DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
                                   AplCodegen::RValue rhs) {
   return codegenManager->divCodegen(lhs, rhs);
 }
+
+AplCodegen::RValue ReshapeOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                      AplCodegen::RValue lhs,
+                                      AplCodegen::RValue rhs) {
+  return codegenManager->reshapeCodegen(lhs, rhs);
+}
 // endregion DyadicOp
 
 // region HelperMethods
@@ -74,6 +80,8 @@ unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {
     return make_unique<AplOp::MulOp>();
   case Symbol::DIVIDE:
     return make_unique<AplOp::DivOp>();
+  case Symbol::RHO:
+    return make_unique<AplOp::ReshapeOp>();
   default:
     throw std::logic_error("Specified dyadic operation is unimplemented!");
   }
@@ -98,4 +106,5 @@ const string AddOp::print() const { return "+"; }
 const string SubOp::print() const { return "-"; }
 const string MulOp::print() const { return "x"; }
 const string DivOp::print() const { return "÷"; }
+const string ReshapeOp::print() const { return "⍴"; }
 } // namespace AplOp

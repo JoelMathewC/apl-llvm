@@ -8,7 +8,7 @@ using namespace std;
 using namespace llvm;
 
 namespace AplOp {
-enum Symbol { PLUS, MINUS, TIMES, DIVIDE, IOTA };
+enum Symbol { PLUS, MINUS, TIMES, DIVIDE, IOTA, RHO };
 
 class Op {
 public:
@@ -70,6 +70,14 @@ public:
 };
 
 class DivOp : public DyadicOp {
+public:
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
+                             AplCodegen::RValue lhs,
+                             AplCodegen::RValue rhs) override;
+  const string print() const override;
+};
+
+class ReshapeOp : public DyadicOp {
 public:
   AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
                              AplCodegen::RValue lhs,

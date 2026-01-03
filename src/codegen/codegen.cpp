@@ -598,5 +598,107 @@ RValue LlvmCodegen::divCodegen(RValue arg1, RValue arg2) {
 
   return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
 }
+
+RValue LlvmCodegen::reshapeCodegen(RValue targetShape, RValue arg) {
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *ShapeSizeVerifyFailedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeSizeVerifyPassedBB =
+      BasicBlock::Create(*this->context, "", func);
+
+  Value *verifyCond1 =
+      builder->CreateICmpEQ(targetShape.getShapeLength(), builder->getInt32(1));
+
+  this->builder->CreateCondBr(verifyCond1, ShapeSizeVerifyPassedBB,
+                              ShapeSizeVerifyFailedBB);
+
+  // Shape Size Verify Failed
+  this->builder->SetInsertPoint(ShapeSizeVerifyFailedBB);
+  throwError();
+
+  // Shape Size Verify Passed
+  this->builder->SetInsertPoint(ShapeSizeVerifyPassedBB);
+
+  // Allocate space for the result
+  Value *originalArgTotalElemCount = sumArrShape(arg);
+
+  // Loop through the target shape to identify how many elements are required in
+  // the resultant array.
+  AllocaInst *totalElemCountAlloca =
+      this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
+  this->builder->CreateStore(this->builder->getInt32(1), totalElemCountAlloca);
+
+  Value *shapeLength = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), targetShape.getShapePtr());
+
+  // reserve size of the resultant array
+  auto [newShapePtr, newShapeSize] =
+      allocHeap(shapeLength, this->builder->getInt32Ty());
+
+  auto [shapeLoopBB, shapeIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *shapeIterVal = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), shapeIterAlloca);
+
+  Value *shapePtr =
+      this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                               targetShape.getResultPtr(), {shapeIterVal});
+  Value *shapeVal =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), shapePtr);
+  shapeVal =
+      this->builder->CreateFPToSI(shapeVal, Type::getInt32Ty(*this->context));
+
+  Value *oldTotalElemCount = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), totalElemCountAlloca);
+
+  Value *newTotalElemCount =
+      this->builder->CreateMul(oldTotalElemCount, shapeVal);
+
+  builder->CreateStore(newTotalElemCount, totalElemCountAlloca);
+
+  Value *newShapePtrOffset = this->builder->CreateGEP(
+      Type::getInt32Ty(*this->context), newShapePtr, {shapeIterVal});
+
+  builder->CreateStore(shapeVal, newShapePtrOffset);
+
+  Value *nextShapeIterVal =
+      this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
+
+  this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
+
+  this->addLoopEnd(shapeLoopBB, nextShapeIterVal, shapeLength);
+
+  // reserve size of the resultant array
+  auto [resultBasePtr, resultSize] =
+      allocHeap(newTotalElemCount, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *srcPtrOffset =
+      this->builder->CreateSRem(iterVal, originalArgTotalElemCount);
+
+  Value *srcPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                           arg.getResultPtr(), {srcPtrOffset});
+
+  Value *srcVal =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), srcPtr);
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+
+  this->builder->CreateStore(srcVal, resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, newTotalElemCount);
+
+  return RValue(resultBasePtr, newShapePtr, shapeLength);
+}
 // endregion LlvmCodegen
 } // namespace AplCodegen

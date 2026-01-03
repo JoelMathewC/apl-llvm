@@ -62,5 +62,6 @@ public:
   RValue subCodegen(RValue arg1, RValue arg2);
   RValue mulCodegen(RValue arg1, RValue arg2);
   RValue divCodegen(RValue arg1, RValue arg2);
+  RValue reshapeCodegen(RValue targetShape, RValue arg);
 };
 } // namespace AplCodegen
