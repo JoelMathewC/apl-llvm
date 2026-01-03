@@ -40,7 +40,12 @@ int main() {
     parser();
     auto llvmIr = astRetPtr->codegen(codegenManager.get());
     auto compiledFunc = jit->compile(codegenManager.get(), llvmIr);
-    compiledFunc();
+
+    try {
+      compiledFunc();
+    } catch (...) {
+      cout << "Syntax Error!\n";
+    }
   }
 
   return 0;
