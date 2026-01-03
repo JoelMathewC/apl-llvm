@@ -11,12 +11,15 @@ using namespace std;
 using namespace llvm;
 
 namespace AplCodegen {
+// region RValue
 Value *RValue::getResultPtr() { return this->resultPtr; }
 Value *RValue::getShapePtr() { return this->shapePtr; }
 Value *RValue::getShapeLength() { return this->shapeLength; }
 RValue::RValue(Value *resultPtr, Value *shapePtr, Value *shapeLength)
     : resultPtr(resultPtr), shapePtr(shapePtr), shapeLength(shapeLength) {}
+// endregion RValue
 
+// region LlvmCodegen
 LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
   this->dataLayout = dataLayout;
   this->initializeContextAndModule();
@@ -45,13 +48,11 @@ pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
 LlvmCodegen::getAndReinitializeContextAndModule() {
   auto prev_context = std::move(this->context);
   auto prev_module = std::move(this->module);
-
   this->initializeContextAndModule();
   return make_pair(std::move(prev_context), std::move(prev_module));
 }
 
 pair<Value *, Value *> LlvmCodegen::allocHeap(Value *size, Type *elemType) {
-  // Add the malloc function (if it doesnt exist).
   FunctionCallee mallocFunc = this->module->getOrInsertFunction(
       Constants::heapAllocFuncName, this->builder->getPtrTy(),
       Type::getInt32Ty(*this->context));
@@ -65,32 +66,48 @@ pair<Value *, Value *> LlvmCodegen::allocHeap(Value *size, Type *elemType) {
   return make_pair(this->builder->CreateCall(mallocFunc, totalSize), totalSize);
 }
 
-RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
-  // Create a global variable with the literal constant value.
-  ArrayType *arrTy =
-      ArrayType::get(Type::getFloatTy(*this->context), vec.size());
-  Constant *init =
-      ConstantDataArray::get(*this->context, ArrayRef(vec.data(), vec.size()));
-  llvm::GlobalVariable *sourceGlobal = new llvm::GlobalVariable(
-      *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init);
+void LlvmCodegen::print(string fmt, Value *val = nullptr) {
+  Type *intType = Type::getInt32Ty(*this->context);
+  Type *charPtrType = PointerType::getUnqual(Type::getInt8Ty(*this->context));
+  FunctionType *printfType = FunctionType::get(intType, {charPtrType}, true);
+  FunctionCallee printfFn =
+      this->module->getOrInsertFunction("printf", printfType);
 
-  // Get the size that needs to be reserved and reserve it.
-  auto [rawPtr, totalSize] =
-      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), vec.size()),
-                this->builder->getFloatTy());
+  Value *formatStr = this->builder->CreateGlobalString(fmt);
+  std::vector<Value *> printfArgs = {formatStr};
 
-  // Initiate a memcpy of the global constant into the reserved memory location.
-  this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
-                              MaybeAlign(0), totalSize);
+  if (val != nullptr)
+    printfArgs.push_back(val);
+  this->builder->CreateCall(printfFn, printfArgs, "printfCall");
+}
 
-  // Get the size that needs to be reserved and reserve it.
-  auto [shapeRawPtr, shapeSize] =
-      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1),
-                this->builder->getInt32Ty());
-  builder->CreateStore(builder->getInt32(vec.size()), shapeRawPtr);
+void LlvmCodegen::throwError() {
+  Type *RetType = PointerType::getUnqual(*this->context);
+  Type *ArgType = Type::getInt64Ty(*this->context);
+  auto allocExceptionFunc = this->module->getOrInsertFunction(
+      "__cxa_allocate_exception", RetType, ArgType);
 
-  return RValue(rawPtr, shapeRawPtr,
-                ConstantInt::get(Type::getInt32Ty(*this->context), 1));
+  Type *VoidTy = Type::getVoidTy(*this->context);
+  Type *PtrTy = PointerType::getUnqual(*this->context);
+  auto throwFunc = this->module->getOrInsertFunction("__cxa_throw", VoidTy,
+                                                     PtrTy, PtrTy, PtrTy);
+
+  Value *ExPtr = this->builder->CreateCall(
+      allocExceptionFunc,
+      {ConstantInt::get(Type::getInt64Ty(*this->context), 4)});
+
+  Value *IntPtr =
+      this->builder->CreateBitCast(ExPtr, Type::getInt32Ty(*this->context));
+  this->builder->CreateStore(
+      ConstantInt::get(Type::getInt32Ty(*this->context), 1), ExPtr);
+
+  GlobalVariable *TypeInfo =
+      new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
+                         GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
+
+  Value *NullPtr = ConstantPointerNull::get(builder->getPtrTy());
+  builder->CreateCall(throwFunc, {ExPtr, TypeInfo, NullPtr});
+  this->builder->CreateUnreachable();
 }
 
 pair<BasicBlock *, Value *>
@@ -121,138 +138,114 @@ void LlvmCodegen::addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
   this->builder->SetInsertPoint(AfterLoopBB);
 }
 
-RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
-  Function *func = this->builder->GetInsertBlock()->getParent();
-  Value *verifyCond =
-      builder->CreateICmpEQ(arg1.getShapeLength(), arg2.getShapeLength());
-  BasicBlock *AfterVerifyBB = BasicBlock::Create(*this->context, "", func);
-  BasicBlock *RemainingBB = BasicBlock::Create(*this->context, "", func);
-
-  // TODO: swap back
-  this->builder->CreateCondBr(verifyCond, RemainingBB, AfterVerifyBB);
-
-  this->builder->SetInsertPoint(AfterVerifyBB);
-
-  Type *RetType = PointerType::getUnqual(*this->context);
-  Type *ArgType = Type::getInt64Ty(*this->context);
-  auto allocExceptionFunc = this->module->getOrInsertFunction(
-      "__cxa_allocate_exception", RetType, ArgType);
-
-  Type *VoidTy = Type::getVoidTy(*this->context);
-  Type *PtrTy = PointerType::getUnqual(*this->context);
-  auto throwFunc = this->module->getOrInsertFunction("__cxa_throw", VoidTy,
-                                                     PtrTy, PtrTy, PtrTy);
-
-  Value *ExPtr = this->builder->CreateCall(
-      allocExceptionFunc,
-      {ConstantInt::get(Type::getInt64Ty(*this->context), 4)});
-
-  Value *IntPtr =
-      this->builder->CreateBitCast(ExPtr, Type::getInt32Ty(*this->context));
-  this->builder->CreateStore(
-      ConstantInt::get(Type::getInt32Ty(*this->context), 1), ExPtr);
-
-  // 3. Define TypeInfo (External constant for 'int')
-  GlobalVariable *TypeInfo =
-      new GlobalVariable(*this->module, Type::getInt8Ty(*this->context), true,
-                         GlobalValue::ExternalLinkage, nullptr, "_ZTIi");
-
-  // 4. Call __cxa_throw(exception_ptr, type_info, destructor)
-  Value *NullPtr = ConstantPointerNull::get(builder->getPtrTy());
-  builder->CreateCall(throwFunc, {ExPtr, TypeInfo, NullPtr});
-
-  this->builder->CreateUnreachable(); // __cxa_throw never returns
-
-  // TODO: test elementwise comparison of shape idxs for both args
-
-  // START SHAPE LOOP
-  // At this point we have verified that the two arguments are of the same shape
-  // We want to get a sum of all the elements that we need to operate on
-
-  this->builder->SetInsertPoint(RemainingBB);
-  AllocaInst *sumAlloca =
+Value *LlvmCodegen::sumArrShape(RValue arg) {
+  // Reserving a space to store total element count
+  AllocaInst *totalElemCountAlloca =
       this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(this->builder->getInt32(1), sumAlloca);
+  this->builder->CreateStore(this->builder->getInt32(1), totalElemCountAlloca);
+
+  // Loop1: Iterate through the shape array and print shape
+  // and count the total number of elements.
   auto [shapeLoopBB, shapeIterAlloca] =
       this->addLoopStart(this->builder->getInt32(0));
+
   Value *shapeIterVal = this->builder->CreateLoad(
       Type::getInt32Ty(*this->context), shapeIterAlloca);
 
-  Value *shapePtr = this->builder->CreateGEP(
-      Type::getInt32Ty(*this->context), arg1.getShapePtr(), {shapeIterVal});
+  Value *shapePtr = this->builder->CreateGEP(Type::getInt32Ty(*this->context),
+                                             arg.getShapePtr(), {shapeIterVal});
   Value *shapeVal =
       this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr);
-  Value *oldSumVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
-  Value *newSumVal = this->builder->CreateMul(oldSumVal, shapeVal);
-  builder->CreateStore(newSumVal, sumAlloca);
 
+  Value *oldTotalElemCount = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), totalElemCountAlloca);
+
+  Value *newTotalElemCount =
+      this->builder->CreateMul(oldTotalElemCount, shapeVal);
+
+  builder->CreateStore(newTotalElemCount, totalElemCountAlloca);
+
+  Value *nextShapeIterVal =
+      this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
+
+  this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
+
+  this->addLoopEnd(shapeLoopBB, nextShapeIterVal, arg.getShapeLength());
+  // end Loop 1
+
+  return newTotalElemCount;
+}
+
+void LlvmCodegen::verifyDyadicOperands(RValue arg1, RValue arg2,
+                                       BasicBlock *remainingBB) {
+  Function *func = this->builder->GetInsertBlock()->getParent();
+  BasicBlock *ShapeSizeVerifyFailedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeSizeVerifyPassedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeValVerifyFailedBB =
+      BasicBlock::Create(*this->context, "", func);
+  BasicBlock *ShapeValVerifyPassedBB =
+      BasicBlock::Create(*this->context, "", func);
+
+  Value *verifyCond1 =
+      builder->CreateICmpEQ(arg1.getShapeLength(), arg2.getShapeLength());
+
+  this->builder->CreateCondBr(verifyCond1, ShapeSizeVerifyPassedBB,
+                              ShapeSizeVerifyFailedBB);
+
+  // Shape Size Verify Failed
+  this->builder->SetInsertPoint(ShapeSizeVerifyFailedBB);
+  throwError();
+
+  // Shape Size Verify Passed
+  this->builder->SetInsertPoint(ShapeSizeVerifyPassedBB);
+
+  auto [shapeLoopBB, shapeIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *shapeIterVal = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), shapeIterAlloca);
+
+  Value *shapePtr1 = this->builder->CreateGEP(
+      Type::getInt32Ty(*this->context), arg1.getShapePtr(), {shapeIterVal});
+  Value *shapeVal1 =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr1);
+
+  Value *shapePtr2 = this->builder->CreateGEP(
+      Type::getInt32Ty(*this->context), arg2.getShapePtr(), {shapeIterVal});
+  Value *shapeVal2 =
+      this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr2);
+
+  Value *verifyCond2 = builder->CreateICmpEQ(shapeVal1, shapeVal2);
+
+  this->builder->CreateCondBr(verifyCond2, ShapeValVerifyPassedBB,
+                              ShapeValVerifyFailedBB);
+
+  // Shape Val Verify Failed
+  this->builder->SetInsertPoint(ShapeValVerifyFailedBB);
+  throwError();
+
+  this->builder->SetInsertPoint(ShapeValVerifyPassedBB);
   Value *nextShapeIterVal =
       this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
   this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
   this->addLoopEnd(shapeLoopBB, nextShapeIterVal, arg1.getShapeLength());
-  //   print("sumVal: %d", sumVal);
-  // END SHAPE LOOP
-
-  // START PROCESS LOOP
-  Value *sumVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
-  auto [resultBasePtr, resultSize] =
-      allocHeap(sumVal, this->builder->getFloatTy());
-
-  auto [processLoopBB, processIterAlloca] =
-      this->addLoopStart(this->builder->getInt32(0));
-  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
-                                             processIterAlloca);
-
-  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg1.getResultPtr(), {iterVal});
-  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                            arg2.getResultPtr(), {iterVal});
-  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
-                                              resultBasePtr, {iterVal});
-  Value *arg1Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
-  Value *arg2Val =
-      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
-  Value *processSumVal = this->builder->CreateFAdd(arg1Val, arg2Val);
-  this->builder->CreateStore(processSumVal, resultPtr);
-
-  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
-  this->builder->CreateStore(nextIterVal, processIterAlloca);
-  //   print("nextIterVal: %d", nextIterVal);
-  //   print("sumVal: %d", sumVal);
-
-  this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
-
-  // END PROCESS LOOP
-
-  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
-}
-
-void LlvmCodegen::print(string fmt, Value *val = nullptr) {
-  Type *intType = Type::getInt32Ty(*this->context);
-  Type *charPtrType = PointerType::getUnqual(Type::getInt8Ty(*this->context));
-  FunctionType *printfType = FunctionType::get(intType, {charPtrType}, true);
-  FunctionCallee printfFn =
-      this->module->getOrInsertFunction("printf", printfType);
-
-  Value *formatStr = this->builder->CreateGlobalString(fmt);
-  std::vector<Value *> printfArgs = {formatStr};
-
-  if (val != nullptr)
-    printfArgs.push_back(val);
-  this->builder->CreateCall(printfFn, printfArgs, "printfCall");
 }
 
 void LlvmCodegen::printResultCodegen(RValue returnExpr) {
   print("<");
 
-  AllocaInst *sumAlloca =
+  // Reserving a space to store total element count
+  AllocaInst *totalElemCountAlloca =
       this->builder->CreateAlloca(Type::getInt32Ty(*this->context), nullptr);
-  builder->CreateStore(this->builder->getInt32(1), sumAlloca);
+  builder->CreateStore(this->builder->getInt32(1), totalElemCountAlloca);
+
+  // Loop1: Iterate through the shape array and print shape
+  // and count the total number of elements.
   auto [shapeLoopBB, shapeIterAlloca] =
       this->addLoopStart(this->builder->getInt32(0));
+
   Value *shapeIterVal = this->builder->CreateLoad(
       Type::getInt32Ty(*this->context), shapeIterAlloca);
 
@@ -261,44 +254,124 @@ void LlvmCodegen::printResultCodegen(RValue returnExpr) {
                                returnExpr.getShapePtr(), {shapeIterVal});
   Value *shapeVal =
       this->builder->CreateLoad(Type::getInt32Ty(*this->context), shapePtr);
-  Value *oldSumVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
-  Value *newSumVal = this->builder->CreateMul(oldSumVal, shapeVal);
-  builder->CreateStore(newSumVal, sumAlloca);
+
+  Value *oldTotalElemCount = this->builder->CreateLoad(
+      Type::getInt32Ty(*this->context), totalElemCountAlloca);
+
+  Value *newTotalElemCount =
+      this->builder->CreateMul(oldTotalElemCount, shapeVal);
+
+  builder->CreateStore(newTotalElemCount, totalElemCountAlloca);
 
   print("%dx", shapeVal);
 
   Value *nextShapeIterVal =
       this->builder->CreateAdd(shapeIterVal, builder->getInt32(1));
+
   this->builder->CreateStore(nextShapeIterVal, shapeIterAlloca);
+
   this->addLoopEnd(shapeLoopBB, nextShapeIterVal, returnExpr.getShapeLength());
+  // end Loop 1
 
   print("> [");
 
-  Value *sumVal =
-      this->builder->CreateLoad(Type::getInt32Ty(*this->context), sumAlloca);
+  // Loop 2: Loop through the array and print individual values
   auto [processLoopBB, processIterAlloca] =
       this->addLoopStart(this->builder->getInt32(0));
+
   Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
                                              processIterAlloca);
+
   Value *arg1Ptr = this->builder->CreateGEP(
       Type::getFloatTy(*this->context), returnExpr.getResultPtr(), {iterVal});
+
   Value *arg1Val =
       this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
 
-  // https://stackoverflow.com/questions/63144506/printf-doesnt-work-for-floats-in-llvm-ir/63156309#63156309
+  // https://stackoverflow.com/questions/63144506/printf-doesnt-work-for-floats-in-llvm-ir
   print("%.2f ",
         this->builder->CreateFPExt(arg1Val, this->builder->getDoubleTy()));
 
   Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
   this->builder->CreateStore(nextIterVal, processIterAlloca);
-  this->addLoopEnd(processLoopBB, nextIterVal, sumVal);
+  this->addLoopEnd(processLoopBB, nextIterVal, newTotalElemCount);
+  // end Loop 2
 
   print("]\n");
   this->builder->CreateRet(nullptr);
 }
 
-void LlvmCodegen::returnCodegen(Value *returnExpr) {
-  this->builder->CreateRet(returnExpr);
+RValue LlvmCodegen::literalCodegen(const vector<float> vec) {
+  // Create a global variable with the literal constant value.
+  ArrayType *arrTy =
+      ArrayType::get(Type::getFloatTy(*this->context), vec.size());
+  Constant *init =
+      ConstantDataArray::get(*this->context, ArrayRef(vec.data(), vec.size()));
+  llvm::GlobalVariable *sourceGlobal = new llvm::GlobalVariable(
+      *this->module, arrTy, true, llvm::GlobalValue::InternalLinkage, init);
+
+  // Get the size that needs to be reserved and reserve it.
+  auto [rawPtr, totalSize] =
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), vec.size()),
+                this->builder->getFloatTy());
+
+  // Initiate a memcpy of the global constant into the reserved memory location.
+  this->builder->CreateMemCpy(rawPtr, MaybeAlign(0), sourceGlobal,
+                              MaybeAlign(0), totalSize);
+
+  // Get the size that needs to be reserved and reserve it.
+  auto [shapeRawPtr, shapeSize] =
+      allocHeap(ConstantInt::get(Type::getInt32Ty(*this->context), 1),
+                this->builder->getInt32Ty());
+
+  builder->CreateStore(builder->getInt32(vec.size()), shapeRawPtr);
+
+  return RValue(rawPtr, shapeRawPtr,
+                ConstantInt::get(Type::getInt32Ty(*this->context), 1));
 }
+
+RValue LlvmCodegen::addCodegen(RValue arg1, RValue arg2) {
+  // Verify that the operands are of the right size
+  BasicBlock *RemainingBB = BasicBlock::Create(
+      *this->context, "", this->builder->GetInsertBlock()->getParent());
+  verifyDyadicOperands(arg1, arg2, RemainingBB);
+
+  // Allocate space for the result
+  this->builder->SetInsertPoint(RemainingBB);
+  Value *totalElemCount = sumArrShape(arg1);
+
+  auto [resultBasePtr, resultSize] =
+      allocHeap(totalElemCount, this->builder->getFloatTy());
+
+  // Process the result
+  auto [processLoopBB, processIterAlloca] =
+      this->addLoopStart(this->builder->getInt32(0));
+
+  Value *iterVal = this->builder->CreateLoad(Type::getInt32Ty(*this->context),
+                                             processIterAlloca);
+
+  Value *arg1Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg1.getResultPtr(), {iterVal});
+
+  Value *arg2Ptr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                            arg2.getResultPtr(), {iterVal});
+
+  Value *resultPtr = this->builder->CreateGEP(Type::getFloatTy(*this->context),
+                                              resultBasePtr, {iterVal});
+  Value *arg1Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg1Ptr);
+
+  Value *arg2Val =
+      this->builder->CreateLoad(Type::getFloatTy(*this->context), arg2Ptr);
+
+  Value *processVal = this->builder->CreateFAdd(arg1Val, arg2Val);
+  this->builder->CreateStore(processVal, resultPtr);
+
+  Value *nextIterVal = this->builder->CreateAdd(iterVal, builder->getInt32(1));
+  this->builder->CreateStore(nextIterVal, processIterAlloca);
+  this->addLoopEnd(processLoopBB, nextIterVal, totalElemCount);
+
+  return RValue(resultBasePtr, arg1.getShapePtr(), arg1.getShapeLength());
+}
+// endregion LlvmCodegen
 } // namespace AplCodegen

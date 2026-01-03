@@ -36,21 +36,23 @@ public:
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
   getAndReinitializeContextAndModule();
 
-  pair<Value *, Value *> allocHeap(Value *size, Type* elemType);
-
+  // Wrappers over external functions
+  pair<Value *, Value *> allocHeap(Value *size, Type *elemType);
   void print(string fmt, Value *val);
-  void printResultCodegen(RValue returnExpr);
+  void throwError();
 
-  void returnCodegen(Value *returnExpr);
-  RValue literalCodegen(const vector<float> vec);
-
-  // RValue negateCodegen(RValue arg);
-
+  // Codegen Helper functions
   pair<BasicBlock *, Value *> addLoopStart(Value *loopIterInitialValue);
   void addLoopEnd(BasicBlock *loopBB, Value *nextIterVal,
                   Value *loopIterFinalValue);
+  Value *sumArrShape(RValue arg);
+  void verifyDyadicOperands(RValue arg1, RValue arg2, BasicBlock* remainingBB);
+  void printResultCodegen(RValue returnExpr);
 
+  // Codegen function
+  RValue literalCodegen(const vector<float> vec);
   RValue addCodegen(RValue arg1, RValue arg2);
+  // RValue negateCodegen(RValue arg);
   // RValue subCodegen(RValue arg1, RValue arg2);
   // RValue mulCodegen(RValue arg1, RValue arg2);
   // RValue divCodegen(RValue arg1, RValue arg2);
