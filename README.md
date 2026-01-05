@@ -12,7 +12,7 @@ At the end of this stage, the REPL interface will be capable of printing the AST
 
 ## Setup & Running
 ```bash
-cmake -B build -DLLVM_DIR=<llvm-install-path>
+cmake -B build
 cmake --build build/ --config Release --target apl-repl
 ./build/apl-repl
 ```
