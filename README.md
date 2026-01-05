@@ -6,6 +6,8 @@ The code in this branch is intended to serve as a reference to those following t
 
 At the end of this stage, the REPL interface will be capable of parsing valid APL programs and flagging syntax errors.
 
+![](assets/demo.png)
+
 ## Setup & Running
 ```bash
 cmake -B build
