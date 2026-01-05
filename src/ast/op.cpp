@@ -14,61 +14,6 @@ unsigned long getNumElemFromShape(vector<unsigned long> resultShape) {
 }
 // endregion LocalFunction
 
-// region MonadicOp
-AplCodegen::RValue MonadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                      AplCodegen::RValue operand) {
-  return AplCodegen::RValue(nullptr, nullptr, nullptr);
-}
-
-AplCodegen::RValue NegateOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                     AplCodegen::RValue operand) {
-  return codegenManager->negateCodegen(operand);
-}
-
-AplCodegen::RValue IndexGenOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                       AplCodegen::RValue operand) {
-  return codegenManager->indexGenCodegen(operand);
-}
-// endregion MonadicOp
-
-// region DyadicOp
-AplCodegen::RValue DyadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                     AplCodegen::RValue lhs,
-                                     AplCodegen::RValue rhs) {
-  return AplCodegen::RValue(nullptr, nullptr, nullptr);
-}
-
-AplCodegen::RValue AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                  AplCodegen::RValue lhs,
-                                  AplCodegen::RValue rhs) {
-  return codegenManager->addCodegen(lhs, rhs);
-}
-
-AplCodegen::RValue SubOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                  AplCodegen::RValue lhs,
-                                  AplCodegen::RValue rhs) {
-  return codegenManager->subCodegen(lhs, rhs);
-}
-
-AplCodegen::RValue MulOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                  AplCodegen::RValue lhs,
-                                  AplCodegen::RValue rhs) {
-  return codegenManager->mulCodegen(lhs, rhs);
-}
-
-AplCodegen::RValue DivOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                  AplCodegen::RValue lhs,
-                                  AplCodegen::RValue rhs) {
-  return codegenManager->divCodegen(lhs, rhs);
-}
-
-AplCodegen::RValue ReshapeOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
-                                      AplCodegen::RValue lhs,
-                                      AplCodegen::RValue rhs) {
-  return codegenManager->reshapeCodegen(lhs, rhs);
-}
-// endregion DyadicOp
-
 // region HelperMethods
 unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {
   switch (op) {

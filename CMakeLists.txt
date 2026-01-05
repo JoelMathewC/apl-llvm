@@ -6,29 +6,9 @@ set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # This code has only been tested on the following versions 
-# of flex, bison and GoogleTest
+# of flex, bison
 find_package(FLEX 2.6 REQUIRED)
 find_package(BISON 3.8 REQUIRED)
-find_package(GTest 1.17 REQUIRED)
-find_package(LLVM REQUIRED CONFIG)
-
-# LLVM specific setup
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-include_directories(${LLVM_INCLUDE_DIRS})
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-add_definitions(${LLVM_DEFINITIONS_LIST})
-
-# Use llvm-config components to see the list of possible components
-# This cmake function will map all components to assocaited libraries
-# and assign that list to llvm_libs
-llvm_map_components_to_libnames(llvm_libs 
-  support 
-  core
-  irreader
-  orcjit
-  x86asmparser
-  x86codegen
-)
 
 # Generate lexer and parser
 set(SRC_DIR "src")
@@ -52,37 +32,10 @@ target_sources(apl-repl
     ${SRC_DIR}/main.cpp
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
-    ${SRC_DIR}/codegen/codegen.cpp
-    ${SRC_DIR}/compiler/compiler.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )
 
 target_link_libraries(
   apl-repl
-  ${llvm_libs}
 )
-
-# Setup GoogleTest
-set(TEST_DIR "test")
-enable_testing()
-include(GoogleTest)
-
-add_executable(parser-test)
-target_sources(parser-test
-  PRIVATE
-    ${TEST_DIR}/ParserTest.cpp
-    ${SRC_DIR}/ast/op.cpp
-    ${SRC_DIR}/ast/ast.cpp
-    ${SRC_DIR}/codegen/codegen.cpp
-    ${SRC_DIR}/compiler/compiler.cpp
-    ${LEXER_DIR}/lexer.g.cpp
-    ${PARSER_DIR}/parser.g.cpp
-)
-target_link_libraries(
-  parser-test
-  ${llvm_libs}
-  GTest::gtest_main
-)
-
-gtest_discover_tests(parser-test)

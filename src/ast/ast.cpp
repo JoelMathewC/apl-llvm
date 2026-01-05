@@ -2,20 +2,12 @@
 #include "op.hpp"
 #include <iostream>
 #include <map>
-#include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "../codegen/codegen.hpp"
-#include "llvm/IR/IRBuilder.h"
 
 using namespace std;
 
 namespace AplAst {
-AplCodegen::RValue Node::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return AplCodegen::RValue(nullptr, nullptr, nullptr);
-}
-
 const string Node::print() const { return "unspecialized-node"; }
 // End Node Section
 
@@ -33,10 +25,6 @@ unique_ptr<Literal> Literal::create(vector<float> vec, float new_elem) {
 }
 
 const vector<float> &Literal::getVal() const { return this->val; }
-
-AplCodegen::RValue Literal::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return codegenManager->literalCodegen(this->val);
-}
 
 const string Literal::print() const {
   // generate comma seperated string of array
@@ -63,11 +51,6 @@ unique_ptr<MonadicCall> MonadicCall::create(AplOp::Symbol op,
   return make_unique<MonadicCall>(std::move(monadicOp), std::move(arg));
 }
 
-AplCodegen::RValue
-MonadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return this->op->codegen(codegenManager, this->arg->codegen(codegenManager));
-}
-
 const string MonadicCall::print() const {
   return "MonadicCall(" + this->op->print() + "," + this->arg->print() + ")";
 }
@@ -84,12 +67,6 @@ unique_ptr<DyadicCall> DyadicCall::create(AplOp::Symbol op,
   auto dyadicOp = AplOp::createDyadicOp(op);
   return make_unique<DyadicCall>(std::move(dyadicOp), std::move(arg1),
                                  std::move(arg2));
-}
-
-AplCodegen::RValue
-DyadicCall::codegen(AplCodegen::LlvmCodegen *codegenManager) {
-  return this->op->codegen(codegenManager, this->arg1->codegen(codegenManager),
-                           this->arg2->codegen(codegenManager));
 }
 
 const string DyadicCall::print() const {
