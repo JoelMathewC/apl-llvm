@@ -6,8 +6,6 @@
 %code requires {
     #include <iostream>
     #include <vector>
-    #include "../ast/ast.hpp"
-    #include "../ast/op.hpp"
 
     // Since the parser.g.hpp file will not include AplLexer
     // we define a declaration here for the time being.
@@ -21,39 +19,34 @@
     #define yylex lexer.yylex
 }
 
-// Configure the parser to accept the lexer and ast return ptr as an argument.
+// Configure the parser to accept the lexer as an argument.
 %parse-param {AplLexer &lexer}
-%parse-param {std::unique_ptr<AplAst::Node>& astRetPtr}
 
 // Using a union here prevents us from using smart pointers
 // https://www.gnu.org/software/bison/manual/html_node/C_002b_002b-Unions.html
 %define api.value.type variant
 
-%type <std::unique_ptr<AplAst::Node>> start prgm op_expr
-%type <std::unique_ptr<AplAst::Literal>> array
-
 %token <float> LITERAL
-%token <AplOp::Symbol> OPERATOR
 %token <char> INPUT_COMPLETED EXIT HIGH_MINUS
 
 %right OPERATOR
 
 %%
-start: prgm INPUT_COMPLETED {astRetPtr = std::move($1); YYACCEPT;}
+start: prgm INPUT_COMPLETED {YYACCEPT;}
     | INPUT_COMPLETED       {YYACCEPT;}
     | EXIT                  {exit(0);}
 
-prgm: op_expr           {$$ = std::move($1);} 
+prgm: op_expr           {} 
 
-op_expr: '(' op_expr ')'        {$$ = std::move($2);}
-    | OPERATOR op_expr          {$$ = AplAst::MonadicCall::create($1, $2);}    
-    | op_expr OPERATOR op_expr  {$$ = AplAst::DyadicCall::create($2, $1, $3);}    
-    | array                     {$$ = std::move($1);}
+op_expr: '(' op_expr ')'        {}
+    | OPERATOR op_expr          {}    
+    | op_expr OPERATOR op_expr  {}    
+    | array                     {}
 
-array: array LITERAL                {$$ = AplAst::Literal::create($1->getVal(),$2);}
-    | array HIGH_MINUS LITERAL      {$$ = AplAst::Literal::create($1->getVal(),-1*$3);}
-    | HIGH_MINUS LITERAL            {$$ = AplAst::Literal::create(-1 * $2);}
-    | LITERAL                       {$$ = AplAst::Literal::create($1);}
+array: array LITERAL                {}
+    | array HIGH_MINUS LITERAL      {}
+    | HIGH_MINUS LITERAL            {}
+    | LITERAL                       {}
 
 %%
 

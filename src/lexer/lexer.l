@@ -1,7 +1,6 @@
 %{
     
     #include "AplLexer.hpp"
-    #include "../ast/op.hpp"
     #include "../parser/parser.g.hpp"
     #include <iostream>
     typedef yy::parser::token token;
@@ -32,12 +31,12 @@ without context so we differ the distinction to the parser.
 "quit()"    {return token::EXIT;}
 [()]	    {return *yytext;}
 
-"+"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::PLUS); return token::OPERATOR;}
-"-"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::MINUS); return token::OPERATOR;}
-"x"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::TIMES); return token::OPERATOR;}
-"÷"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::DIVIDE); return token::OPERATOR;}
-"⍳"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::IOTA); return token::OPERATOR;}
-"⍴"         {yylval->emplace<AplOp::Symbol>(AplOp::Symbol::RHO); return token::OPERATOR;}
+"+"         {return token::OPERATOR;}
+"-"         {return token::OPERATOR;}
+"x"         {return token::OPERATOR;}
+"÷"         {return token::OPERATOR;}
+"⍳"         {return token::OPERATOR;}
+"⍴"         {return token::OPERATOR;}
 
 
 "¯"         {return token::HIGH_MINUS;}
