@@ -5,14 +5,26 @@
 using namespace std;
 
 namespace AplOp {
-// region LocalFunction
-unsigned long getNumElemFromShape(vector<unsigned long> resultShape) {
-  unsigned long numElem = 1;
-  for (auto idx : resultShape)
-    numElem *= idx;
-  return numElem;
+// region MonadicOp
+AplCodegen::RValue MonadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                      AplCodegen::RValue operand) {
+  return AplCodegen::RValue(nullptr, nullptr, nullptr);
 }
-// endregion LocalFunction
+// endregion MonadicOp
+
+// region DyadicOp
+AplCodegen::RValue DyadicOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                     AplCodegen::RValue lhs,
+                                     AplCodegen::RValue rhs) {
+  return AplCodegen::RValue(nullptr, nullptr, nullptr);
+}
+
+AplCodegen::RValue AddOp::codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                  AplCodegen::RValue lhs,
+                                  AplCodegen::RValue rhs) {
+  return codegenManager->addCodegen(lhs, rhs);
+}
+// endregion DyadicOp
 
 // region HelperMethods
 unique_ptr<AplOp::DyadicOp> createDyadicOp(Symbol op) {

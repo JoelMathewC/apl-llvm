@@ -5,6 +5,7 @@
 // https://github.com/DSLs-for-HPC/APL2C
 #pragma once
 
+#include "../codegen/codegen.hpp"
 #include "op.hpp"
 #include <iostream>
 #include <string>
@@ -16,6 +17,7 @@ namespace AplAst {
 // Abstract class for nodes in APL AST that evaluate to expressions
 class Node {
 public:
+  virtual AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager);
   virtual const string print() const;
 };
 
@@ -28,6 +30,7 @@ public:
   static unique_ptr<Literal> create(float val);
   static unique_ptr<Literal> create(vector<float> vec, float new_elem);
   const vector<float> &getVal() const;
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 
@@ -40,6 +43,7 @@ public:
   MonadicCall(unique_ptr<AplOp::MonadicOp> op, unique_ptr<Node> arg);
   static unique_ptr<MonadicCall> create(AplOp::Symbol op,
                                         unique_ptr<Node> &arg);
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 
@@ -54,6 +58,7 @@ public:
              unique_ptr<Node> arg2);
   static unique_ptr<DyadicCall> create(AplOp::Symbol op, unique_ptr<Node> &arg1,
                                        unique_ptr<Node> &arg2);
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager) override;
   const string print() const override;
 };
 

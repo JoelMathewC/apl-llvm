@@ -1,4 +1,4 @@
-#include "ast/ast.hpp"
+#include "codegen/codegen.hpp"
 #include "lexer/AplLexer.hpp"
 #include "parser/parser.g.hpp"
 #include <iostream>
@@ -14,16 +14,17 @@ int main() {
   std::unique_ptr<AplAst::Node> astRetPtr;
   yy::parser parser(lexer, astRetPtr);
 
+  auto codegenManager = make_unique<AplCodegen::LlvmCodegen>();
+
   while (true) {
     cout << "\033[35m>>>\033[0m ";
-    try {
-      parser();
-    } catch (...) {
-      cout << "Error constructing AST!\n";
-    }
+    parser();
 
     if (astRetPtr != nullptr) {
-      cout << *astRetPtr << "\n";
+      auto llvmIr = astRetPtr->codegen(codegenManager.get());
+      auto [context, module] =
+          codegenManager->getAndReinitializeContextAndModule();
+      module->print(errs(), nullptr);
       astRetPtr = nullptr;
     }
   }

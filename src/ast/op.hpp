@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../codegen/codegen.hpp"
+#include "llvm/IR/IRBuilder.h"
 #include <string>
 
 using namespace std;
@@ -13,7 +15,11 @@ public:
 };
 
 // region MonadicOp
-class MonadicOp : public Op {};
+class MonadicOp : public Op {
+public:
+  virtual AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                     AplCodegen::RValue operand);
+};
 
 class NegateOp : public MonadicOp {
 public:
@@ -27,10 +33,18 @@ public:
 // endregion MonadicOp
 
 // region DyadicOp
-class DyadicOp : public Op {};
+class DyadicOp : public Op {
+public:
+  virtual AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
+                                     AplCodegen::RValue lhs,
+                                     AplCodegen::RValue rhs);
+};
 
 class AddOp : public DyadicOp {
 public:
+  AplCodegen::RValue codegen(AplCodegen::LlvmCodegen *codegenManager,
+                             AplCodegen::RValue lhs,
+                             AplCodegen::RValue rhs) override;
   const string print() const override;
 };
 
