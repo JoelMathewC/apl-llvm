@@ -20,7 +20,10 @@ RValue::RValue(Value *resultPtr, Value *shapePtr, Value *shapeLength)
 // endregion RValue
 
 // region LlvmCodegen
-LlvmCodegen::LlvmCodegen() {
+
+// region LlvmCodegen
+LlvmCodegen::LlvmCodegen(llvm::DataLayout dataLayout) {
+  this->dataLayout = dataLayout;
   this->initializeContextAndModule();
 }
 
@@ -29,6 +32,7 @@ LlvmCodegen::~LlvmCodegen() = default;
 void LlvmCodegen::initializeContextAndModule() {
   this->context = make_unique<LLVMContext>();
   this->module = make_unique<Module>(Constants::moduleName, *this->context);
+  this->module->setDataLayout(this->dataLayout);
   this->builder = make_unique<IRBuilder<>>(*this->context);
 
   // TODO: improve how this is done

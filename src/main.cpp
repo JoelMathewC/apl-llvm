@@ -1,4 +1,5 @@
 #include "codegen/codegen.hpp"
+#include "compiler/compiler.hpp"
 #include "lexer/AplLexer.hpp"
 #include "parser/parser.g.hpp"
 #include <iostream>
@@ -14,7 +15,14 @@ int main() {
   std::unique_ptr<AplAst::Node> astRetPtr;
   yy::parser parser(lexer, astRetPtr);
 
-  auto codegenManager = make_unique<AplCodegen::LlvmCodegen>();
+  unique_ptr<AplCompiler::JITCompiler> jit = AplCompiler::JITCompiler::create();
+  if (jit == nullptr) {
+    cout << "Could not initialize JIT. Exiting ...";
+    exit(0);
+  }
+
+  auto codegenManager =
+      make_unique<AplCodegen::LlvmCodegen>(jit->getDataLayout());
 
   while (true) {
     cout << "\033[35m>>>\033[0m ";
@@ -22,9 +30,13 @@ int main() {
 
     if (astRetPtr != nullptr) {
       auto llvmIr = astRetPtr->codegen(codegenManager.get());
-      auto [context, module] =
-          codegenManager->getAndReinitializeContextAndModule();
-      module->print(errs(), nullptr);
+      auto compiledFunc = jit->compile(codegenManager.get(), llvmIr);
+
+      try {
+        compiledFunc();
+      } catch (...) {
+        cout << "Error!\n";
+      }
       astRetPtr = nullptr;
     }
   }

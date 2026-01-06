@@ -52,6 +52,7 @@ target_sources(apl-repl
     ${SRC_DIR}/ast/op.cpp
     ${SRC_DIR}/ast/ast.cpp
     ${SRC_DIR}/codegen/codegen.cpp
+    ${SRC_DIR}/compiler/compiler.cpp
     ${LEXER_DIR}/lexer.g.cpp
     ${PARSER_DIR}/parser.g.cpp
 )

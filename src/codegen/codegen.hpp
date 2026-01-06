@@ -31,7 +31,7 @@ class LlvmCodegen {
   void initializeContextAndModule();
 
 public:
-  LlvmCodegen();
+  LlvmCodegen(llvm::DataLayout dataLayout);
   ~LlvmCodegen();
 
   pair<unique_ptr<LLVMContext>, unique_ptr<Module>>
