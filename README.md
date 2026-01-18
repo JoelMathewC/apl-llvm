@@ -4,7 +4,7 @@ A JIT compiler for the APL programming language built using LLVM. The project ex
 
 ## Stage 3: LLVM Codegen
 
-The code in this branch is intended to serve as a reference to those following the Building an APL compiler using LLVM tutorial from my blog.
+The code in this branch is intended to serve as a reference to those following the [Building an APL compiler using LLVM](https://joelmathewc.github.io/blog/apl-llvm/) tutorial from my blog.
 
 At the end of this stage, the REPL interface will be capable of printing the LLVM IR for an APL program
 
